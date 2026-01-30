@@ -1,0 +1,9 @@
+node_modules
+dist
+.open-motion-tmp
+*.mp4
+*.png
+.DS_Store
+.turbo
+.parcel-cache
+progress.md

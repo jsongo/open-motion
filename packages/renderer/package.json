@@ -1,0 +1,9 @@
+{
+  "name": "@open-motion/renderer",
+  "version": "0.1.0",
+  "main": "dist/index.js",
+  "dependencies": {
+    "@open-motion/core": "workspace:*",
+    "playwright": "^1.40.0"
+  }
+}

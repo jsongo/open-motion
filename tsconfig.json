@@ -1,0 +1,20 @@
+{
+  "compilerOptions": {
+    "target": "ESNext",
+    "module": "ESNext",
+    "moduleResolution": "bundler",
+    "strict": true,
+    "declaration": true,
+    "skipLibCheck": true,
+    "jsx": "react-jsx",
+    "esModuleInterop": true,
+    "allowSyntheticDefaultImports": true,
+    "baseUrl": ".",
+    "paths": {
+      "@open-motion/core": ["packages/core/src"],
+      "@open-motion/renderer": ["packages/renderer/src"],
+      "@open-motion/encoder": ["packages/encoder/src"]
+    }
+  },
+  "exclude": ["node_modules"]
+}

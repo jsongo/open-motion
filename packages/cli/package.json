@@ -1,0 +1,13 @@
+{
+  "name": "@open-motion/cli",
+  "version": "0.1.0",
+  "bin": {
+    "open-motion": "dist/bin.js"
+  },
+  "dependencies": {
+    "@open-motion/core": "workspace:*",
+    "@open-motion/renderer": "workspace:*",
+    "@open-motion/encoder": "workspace:*",
+    "commander": "^11.0.0"
+  }
+}

@@ -1,0 +1,8 @@
+{
+  "name": "@open-motion/encoder",
+  "version": "0.1.0",
+  "main": "dist/index.js",
+  "dependencies": {
+    "fluent-ffmpeg": "^2.1.2"
+  }
+}
