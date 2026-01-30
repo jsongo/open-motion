@@ -1,19 +1,24 @@
 {
   "name": "open-motion-monorepo",
   "private": true,
+  "packageManager": "pnpm@10.23.0",
   "workspaces": [
     "packages/*",
     "examples/*"
   ],
   "scripts": {
     "build": "turbo run build",
-    "dev": "turbo run dev"
+    "dev": "turbo run dev",
+    "version-packages": "changeset version",
+    "release": "pnpm build && changeset publish"
   },
   "devDependencies": {
+    "@changesets/cli": "^2.29.8",
     "@types/fluent-ffmpeg": "^2.1.28",
     "@types/node": "^25.1.0",
     "@types/react": "^18.3.27",
     "@types/react-dom": "^18.3.7",
+    "turbo": "^2.8.0",
     "typescript": "^5.9.3"
   }
 }

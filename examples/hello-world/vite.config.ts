@@ -9,4 +9,7 @@ export default defineConfig({
       '@open-motion/core': path.resolve(__dirname, '../../packages/core/src/index.tsx'),
     },
   },
+  optimizeDeps: {
+    include: ['react', 'react-dom'],
+  },
 });

@@ -1,10 +1,24 @@
 {
   "name": "@open-motion/core",
-  "version": "0.1.0",
+  "version": "0.0.1-alpha.0",
   "main": "dist/index.js",
   "types": "dist/index.d.ts",
+  "license": "MIT",
+  "scripts": {
+    "build": "tsc"
+  },
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/open-motion/open-motion.git",
+    "directory": "packages/core"
+  },
+  "publishConfig": {
+    "access": "public"
+  },
+  "files": [
+    "dist"
+  ],
   "dependencies": {
-    "react": "^18.0.0"
   },
   "peerDependencies": {
     "react": "^18.0.0"

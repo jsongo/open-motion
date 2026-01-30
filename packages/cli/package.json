@@ -1,9 +1,24 @@
 {
   "name": "@open-motion/cli",
-  "version": "0.1.0",
+  "version": "0.0.1-alpha.0",
   "bin": {
     "open-motion": "dist/bin.js"
   },
+  "license": "MIT",
+  "scripts": {
+    "build": "tsc && chmod +x dist/bin.js"
+  },
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/open-motion/open-motion.git",
+    "directory": "packages/cli"
+  },
+  "publishConfig": {
+    "access": "public"
+  },
+  "files": [
+    "dist"
+  ],
   "dependencies": {
     "@open-motion/core": "workspace:*",
     "@open-motion/renderer": "workspace:*",
