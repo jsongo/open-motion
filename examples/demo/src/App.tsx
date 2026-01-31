@@ -42,18 +42,52 @@ const FloatingIcon: React.FC<{ Icon: any; color: string; delay: number }> = ({ I
 
 const AsyncImage: React.FC<{ src: string }> = ({ src }) => {
   const [loaded, setLoaded] = useState(false);
+  const [error, setError] = useState(false);
 
   useEffect(() => {
     const handle = delayRender(`Loading image: ${src}`);
+    console.debug(`[OpenMotion] Starting load for image: ${src}`);
     const img = new Image();
     img.src = src;
     img.onload = () => {
+      console.debug(`[OpenMotion] Successfully loaded image: ${src}`);
       setLoaded(true);
+      continueRender(handle);
+    };
+    img.onerror = () => {
+      console.error(`[OpenMotion] Failed to load image: ${src}`);
+      setError(true);
       continueRender(handle);
     };
   }, [src]);
 
-  if (!loaded) return null;
+  if (error) {
+    return (
+      <div style={{
+        width: '400px',
+        height: '225px',
+        backgroundColor: '#eee',
+        display: 'flex',
+        alignItems: 'center',
+        justifyContent: 'center',
+        borderRadius: '20px',
+        color: '#666'
+      }}>
+        Failed to load image
+      </div>
+    );
+  }
+
+  if (!loaded) {
+    return (
+      <div style={{
+        width: '400px',
+        height: '225px',
+        backgroundColor: '#f5f5f5',
+        borderRadius: '20px'
+      }} />
+    );
+  }
 
   return (
     <img

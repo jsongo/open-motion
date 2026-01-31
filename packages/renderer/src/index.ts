@@ -82,12 +82,15 @@ export const renderFrames = async ({ url, config, outputDir, compositionId, inpu
         });
       }
 
-      await page.waitForFunction(() =>
-        (window as any).__OPEN_MOTION_READY__ === true &&
-        !((window as any).__OPEN_MOTION_DELAY_RENDER_COUNT__ > 0),
-        { timeout: 30000 }
-      );
+      await page.waitForFunction(() => {
+        const ready = (window as any).__OPEN_MOTION_READY__ === true;
+        const delayCount = (window as any).__OPEN_MOTION_DELAY_RENDER_COUNT__ || 0;
+        return ready && delayCount === 0;
+      }, { timeout: 30000 });
       await page.waitForLoadState('networkidle');
+
+      // Additional small wait to ensure style/layout stability
+      await page.evaluate(() => new Promise(resolve => setTimeout(resolve, 50)));
 
       // Extract audio assets from the first frame or each frame
       if (workerId === 0 && i === 0) {

@@ -126,6 +126,7 @@ export const delayRender = (label?: string) => {
   const handle = delayRenderCounter++;
   if (typeof window !== 'undefined') {
     (window as any).__OPEN_MOTION_DELAY_RENDER_COUNT__ = ((window as any).__OPEN_MOTION_DELAY_RENDER_COUNT__ || 0) + 1;
+    console.debug(`[OpenMotion] delayRender: ${label || handle}, count: ${(window as any).__OPEN_MOTION_DELAY_RENDER_COUNT__}`);
   }
   return handle;
 };
@@ -136,6 +137,7 @@ export const delayRender = (label?: string) => {
 export const continueRender = (handle: number) => {
   if (typeof window !== 'undefined') {
     (window as any).__OPEN_MOTION_DELAY_RENDER_COUNT__ = Math.max(0, ((window as any).__OPEN_MOTION_DELAY_RENDER_COUNT__ || 0) - 1);
+    console.debug(`[OpenMotion] continueRender: ${handle}, count: ${(window as any).__OPEN_MOTION_DELAY_RENDER_COUNT__}`);
   }
 };
 
@@ -145,19 +147,46 @@ export const continueRender = (handle: number) => {
  */
 export const interpolate = (
   input: number,
-  inputRange: [number, number],
-  outputRange: [number, number],
+  inputRange: number[],
+  outputRange: number[],
   options?: { extrapolateLeft?: 'extrapolate' | 'clamp'; extrapolateRight?: 'extrapolate' | 'clamp' }
 ) => {
-  const [minInput, maxInput] = inputRange;
-  const [minOutput, maxOutput] = outputRange;
+  if (inputRange.length < 2) return outputRange[0];
 
-  let result = minOutput + ((input - minInput) / (maxInput - minInput)) * (maxOutput - minOutput);
+  // Simple linear interpolation between multiple segments
+  for (let i = 0; i < inputRange.length - 1; i++) {
+    const minInput = inputRange[i];
+    const maxInput = inputRange[i + 1];
+    const minOutput = outputRange[i];
+    const maxOutput = outputRange[i + 1];
 
-  if (options?.extrapolateLeft === 'clamp' && input < minInput) return minOutput;
-  if (options?.extrapolateRight === 'clamp' && input > maxInput) return maxOutput;
+    if (input >= minInput && input <= maxInput) {
+      return minOutput + ((input - minInput) / (maxInput - minInput)) * (maxOutput - minOutput);
+    }
+  }
 
-  return result;
+  const firstInput = inputRange[0];
+  const lastInput = inputRange[inputRange.length - 1];
+  const firstOutput = outputRange[0];
+  const lastOutput = outputRange[outputRange.length - 1];
+
+  if (input < firstInput) {
+    if (options?.extrapolateLeft === 'clamp') return firstOutput;
+    // Extrapolate using first segment
+    const nextInput = inputRange[1];
+    const nextOutput = outputRange[1];
+    return firstOutput + ((input - firstInput) / (nextInput - firstInput)) * (nextOutput - firstOutput);
+  }
+
+  if (input > lastInput) {
+    if (options?.extrapolateRight === 'clamp') return lastOutput;
+    // Extrapolate using last segment
+    const prevInput = inputRange[inputRange.length - 2];
+    const prevOutput = outputRange[outputRange.length - 2];
+    return lastOutput + ((input - lastInput) / (lastInput - prevInput)) * (lastOutput - prevOutput);
+  }
+
+  return firstOutput;
 };
 
 /**
