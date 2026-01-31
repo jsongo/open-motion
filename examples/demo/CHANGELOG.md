@@ -1,5 +1,14 @@
 # demo-example
 
+## 0.1.1
+
+### Patch Changes
+
+- Updated dependencies [e7cea38]
+- Updated dependencies [e7cea38]
+- Updated dependencies [e7cea38]
+  - @open-motion/core@0.0.1
+
 ## 0.1.1-alpha.1
 
 ### Patch Changes
