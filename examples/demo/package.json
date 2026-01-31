@@ -1,16 +1,19 @@
 {
-  "name": "hello-world-example",
+  "name": "demo-example",
   "private": true,
-  "version": "0.0.1-alpha.0",
+  "version": "0.1.0",
   "type": "module",
   "scripts": {
     "dev": "vite",
     "build": "vite build",
-    "preview": "vite preview"
+    "preview": "vite preview",
+    "render": "open-motion render -u http://localhost:5173 -o out.mp4"
   },
   "dependencies": {
+    "@open-motion/core": "workspace:*",
     "react": "^18.0.0",
-    "react-dom": "^18.0.0"
+    "react-dom": "^18.0.0",
+    "lucide-react": "^0.263.1"
   },
   "devDependencies": {
     "@types/react": "^18.0.0",

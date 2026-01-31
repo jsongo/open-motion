@@ -1,6 +1,13 @@
 import ffmpeg from 'fluent-ffmpeg';
 import path from 'path';
+import fs from 'fs';
 export const encodeVideo = ({ framesDir, fps, outputFile, audioFile }) => {
+    // Verify frames exist
+    const files = fs.readdirSync(framesDir).filter(f => f.startsWith('frame-') && f.endsWith('.png'));
+    if (files.length === 0) {
+        throw new Error(`No frames found in ${framesDir}`);
+    }
+    console.log(`Found ${files.length} frames for encoding.`);
     return new Promise((resolve, reject) => {
         const command = ffmpeg()
             .input(path.join(framesDir, 'frame-%05d.png'))

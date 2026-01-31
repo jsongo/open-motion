@@ -1,16 +1,45 @@
 import { jsx as _jsx } from "react/jsx-runtime";
-import { createContext, useContext } from 'react';
+import React, { createContext, useContext } from 'react';
 const VideoConfigContext = createContext(null);
 const FrameContext = createContext(0);
 const AbsoluteFrameContext = createContext(0);
 const InputPropsContext = createContext({});
 export const CompositionProvider = ({ config, frame, inputProps = {}, children }) => {
-    return (_jsx(VideoConfigContext.Provider, { value: config, children: _jsx(InputPropsContext.Provider, { value: inputProps, children: _jsx(AbsoluteFrameContext.Provider, { value: frame, children: _jsx(FrameContext.Provider, { value: frame, children: children }) }) }) }));
+    React.useEffect(() => {
+        if (typeof window !== 'undefined') {
+            window.__OPEN_MOTION_READY__ = true;
+        }
+    }, []);
+    const [currentFrame, setCurrentFrame] = React.useState(frame);
+    React.useEffect(() => {
+        setCurrentFrame(frame);
+    }, [frame]);
+    React.useEffect(() => {
+        if (typeof window !== 'undefined') {
+            const handler = (e) => {
+                if (typeof e.detail?.frame === 'number') {
+                    setCurrentFrame(e.detail.frame);
+                }
+            };
+            window.addEventListener('open-motion-frame-update', handler);
+            return () => window.removeEventListener('open-motion-frame-update', handler);
+        }
+    }, []);
+    return (_jsx(VideoConfigContext.Provider, { value: config, children: _jsx(InputPropsContext.Provider, { value: inputProps, children: _jsx(AbsoluteFrameContext.Provider, { value: currentFrame, children: _jsx(FrameContext.Provider, { value: currentFrame, children: _jsx("div", { style: {
+                            width: config.width,
+                            height: config.height,
+                            backgroundColor: 'white',
+                            display: 'flex',
+                            flexDirection: 'column',
+                            position: 'relative',
+                            overflow: 'hidden',
+                        }, children: children }, currentFrame) }) }) }) }));
 };
 export const useVideoConfig = () => {
     const context = useContext(VideoConfigContext);
-    if (!context)
-        throw new Error('useVideoConfig must be used within CompositionProvider');
+    if (!context) {
+        return { width: 1920, height: 1080, fps: 30, durationInFrames: 100 };
+    }
     return context;
 };
 export const useCurrentFrame = () => {
@@ -45,7 +74,6 @@ let delayRenderCounter = 0;
  */
 export const delayRender = (label) => {
     const handle = delayRenderCounter++;
-    console.debug(`OpenMotion: delayRender[${handle}] ${label || ''}`);
     if (typeof window !== 'undefined') {
         window.__OPEN_MOTION_DELAY_RENDER_COUNT__ = (window.__OPEN_MOTION_DELAY_RENDER_COUNT__ || 0) + 1;
     }
@@ -55,7 +83,6 @@ export const delayRender = (label) => {
  * continueRender: Signal that an async resource has finished loading.
  */
 export const continueRender = (handle) => {
-    console.debug(`OpenMotion: continueRender[${handle}]`);
     if (typeof window !== 'undefined') {
         window.__OPEN_MOTION_DELAY_RENDER_COUNT__ = Math.max(0, (window.__OPEN_MOTION_DELAY_RENDER_COUNT__ || 0) - 1);
     }
@@ -102,8 +129,6 @@ export const getTimeHijackScript = (frame, fps) => {
         return setTimeout(() => callback(timeMs), 0);
       };
       window.cancelAnimationFrame = (id) => clearTimeout(id);
-
-      console.debug('OpenMotion: Time hijacked for frame ' + frame + ' at ' + timeMs + 'ms');
     })();
   `;
 };

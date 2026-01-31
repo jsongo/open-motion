@@ -1,3 +1,4 @@
+export declare const runInit: (projectName: string) => Promise<void>;
 export declare const runRender: (options: {
     url: string;
     out: string;

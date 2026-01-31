@@ -18,12 +18,49 @@ export const CompositionProvider: React.FC<{
   inputProps?: any;
   children: React.ReactNode;
 }> = ({ config, frame, inputProps = {}, children }) => {
+  React.useEffect(() => {
+    if (typeof window !== 'undefined') {
+      (window as any).__OPEN_MOTION_READY__ = true;
+    }
+  }, []);
+
+  const [currentFrame, setCurrentFrame] = React.useState(frame);
+
+  React.useEffect(() => {
+    setCurrentFrame(frame);
+  }, [frame]);
+
+  React.useEffect(() => {
+    if (typeof window !== 'undefined') {
+      const handler = (e: any) => {
+        if (typeof e.detail?.frame === 'number') {
+          setCurrentFrame(e.detail.frame);
+        }
+      };
+      window.addEventListener('open-motion-frame-update', handler);
+      return () => window.removeEventListener('open-motion-frame-update', handler);
+    }
+  }, []);
+
   return (
     <VideoConfigContext.Provider value={config}>
       <InputPropsContext.Provider value={inputProps}>
-        <AbsoluteFrameContext.Provider value={frame}>
-          <FrameContext.Provider value={frame}>
-            {children}
+        <AbsoluteFrameContext.Provider value={currentFrame}>
+          <FrameContext.Provider value={currentFrame}>
+            <div
+              key={currentFrame}
+              style={{
+                width: config.width,
+                height: config.height,
+                backgroundColor: 'white',
+                display: 'flex',
+                flexDirection: 'column',
+                position: 'relative',
+                overflow: 'hidden',
+              }}
+            >
+              {children}
+            </div>
           </FrameContext.Provider>
         </AbsoluteFrameContext.Provider>
       </InputPropsContext.Provider>
@@ -33,7 +70,9 @@ export const CompositionProvider: React.FC<{
 
 export const useVideoConfig = () => {
   const context = useContext(VideoConfigContext);
-  if (!context) throw new Error('useVideoConfig must be used within CompositionProvider');
+  if (!context) {
+    return { width: 1920, height: 1080, fps: 30, durationInFrames: 100 };
+  }
   return context;
 };
 
@@ -85,7 +124,6 @@ let delayRenderCounter = 0;
  */
 export const delayRender = (label?: string) => {
   const handle = delayRenderCounter++;
-  console.debug(`OpenMotion: delayRender[${handle}] ${label || ''}`);
   if (typeof window !== 'undefined') {
     (window as any).__OPEN_MOTION_DELAY_RENDER_COUNT__ = ((window as any).__OPEN_MOTION_DELAY_RENDER_COUNT__ || 0) + 1;
   }
@@ -96,7 +134,6 @@ export const delayRender = (label?: string) => {
  * continueRender: Signal that an async resource has finished loading.
  */
 export const continueRender = (handle: number) => {
-  console.debug(`OpenMotion: continueRender[${handle}]`);
   if (typeof window !== 'undefined') {
     (window as any).__OPEN_MOTION_DELAY_RENDER_COUNT__ = Math.max(0, ((window as any).__OPEN_MOTION_DELAY_RENDER_COUNT__ || 0) - 1);
   }
@@ -151,8 +188,6 @@ export const getTimeHijackScript = (frame: number, fps: number) => {
         return setTimeout(() => callback(timeMs), 0);
       };
       window.cancelAnimationFrame = (id) => clearTimeout(id);
-
-      console.debug('OpenMotion: Time hijacked for frame ' + frame + ' at ' + timeMs + 'ms');
     })();
   `;
 };

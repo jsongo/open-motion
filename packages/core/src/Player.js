@@ -4,8 +4,23 @@ import { CompositionProvider } from './index';
 export const Player = ({ component: Component, config, inputProps = {}, controls = true, autoPlay = false, loop = false, }) => {
     const [frame, setFrame] = useState(0);
     const [isPlaying, setIsPlaying] = useState(autoPlay);
+    const [scale, setScale] = useState(1);
+    const containerRef = useRef(null);
     const requestRef = useRef();
     const lastTimeRef = useRef();
+    useEffect(() => {
+        const handleResize = () => {
+            if (containerRef.current) {
+                const parentWidth = containerRef.current.parentElement?.clientWidth || window.innerWidth;
+                const s = Math.min(1, (parentWidth - 40) / config.width);
+                if (s > 0)
+                    setScale(s);
+            }
+        };
+        handleResize();
+        window.addEventListener('resize', handleResize);
+        return () => window.removeEventListener('resize', handleResize);
+    }, [config.width]);
     const animate = useCallback((time) => {
         if (lastTimeRef.current !== undefined) {
             const deltaTime = time - lastTimeRef.current;
@@ -48,11 +63,18 @@ export const Player = ({ component: Component, config, inputProps = {}, controls
         setFrame(Number(e.target.value));
         setIsPlaying(false);
     };
-    return (_jsxs("div", { style: { display: 'inline-block', border: '1px solid #ccc', borderRadius: '4px', overflow: 'hidden' }, children: [_jsx("div", { style: {
+    return (_jsxs("div", { ref: containerRef, style: {
+            display: 'inline-block',
+            border: '1px solid #ccc',
+            borderRadius: '4px',
+            overflow: 'hidden',
+            background: '#f0f0f0',
+            width: config.width * scale,
+        }, children: [_jsx("div", { style: {
                     width: config.width,
                     height: config.height,
-                    position: 'relative',
-                    background: '#000',
-                    overflow: 'hidden'
-                }, children: _jsx(CompositionProvider, { config: config, frame: Math.floor(frame), inputProps: inputProps, children: _jsx(Component, {}) }) }), controls && (_jsxs("div", { style: { padding: '10px', background: '#f0f0f0', display: 'flex', alignItems: 'center', gap: '10px' }, children: [_jsx("button", { onClick: togglePlay, children: isPlaying ? 'Pause' : 'Play' }), _jsx("input", { type: "range", min: "0", max: config.durationInFrames - 1, step: "1", value: Math.floor(frame), onChange: handleSeek, style: { flex: 1 } }), _jsxs("div", { style: { minWidth: '80px', fontSize: '12px', textAlign: 'right' }, children: [Math.floor(frame), " / ", config.durationInFrames] })] }))] }));
+                    transform: `scale(${scale})`,
+                    transformOrigin: 'top left',
+                    background: '#fff'
+                }, children: _jsx(CompositionProvider, { config: config, frame: Math.floor(frame), inputProps: inputProps, children: _jsx(Component, {}) }) }), controls && (_jsxs("div", { style: { padding: '10px', background: '#f0f0f0', display: 'flex', alignItems: 'center', gap: '10px', position: 'relative', zIndex: 10 }, children: [_jsx("button", { onClick: togglePlay, children: isPlaying ? 'Pause' : 'Play' }), _jsx("input", { type: "range", min: "0", max: config.durationInFrames - 1, step: "1", value: Math.floor(frame), onChange: handleSeek, style: { flex: 1 } }), _jsxs("div", { style: { minWidth: '80px', fontSize: '12px', textAlign: 'right', color: '#000' }, children: [Math.floor(frame), " / ", config.durationInFrames] })] }))] }));
 };

@@ -31,21 +31,39 @@ export const renderFrames = async ({ url, config, outputDir, compositionId, inpu
         console.log(`Worker ${workerId}: Rendering frames ${startFrame} to ${endFrame}...`);
         for (let i = startFrame; i <= endFrame && i < config.durationInFrames; i++) {
             if (i === startFrame) {
+                await page.addInitScript(({ frame, fps, hijackScript, compositionId, inputProps }) => {
+                    window.__OPEN_MOTION_FRAME__ = frame;
+                    window.__OPEN_MOTION_COMPOSITION_ID__ = compositionId;
+                    window.__OPEN_MOTION_INPUT_PROPS__ = inputProps;
+                    // Execute hijack script
+                    const script = document.createElement('script');
+                    script.textContent = hijackScript;
+                    document.documentElement.appendChild(script);
+                    script.remove();
+                }, {
+                    frame: i,
+                    fps: config.fps,
+                    hijackScript: getTimeHijackScript(i, config.fps),
+                    compositionId,
+                    inputProps
+                });
                 await page.goto(url);
             }
-            await page.evaluate(({ frame, fps, hijackScript, compositionId, inputProps }) => {
-                window.__OPEN_MOTION_FRAME__ = frame;
-                window.__OPEN_MOTION_COMPOSITION_ID__ = compositionId;
-                window.__OPEN_MOTION_INPUT_PROPS__ = inputProps;
-                eval(hijackScript);
-            }, {
-                frame: i,
-                fps: config.fps,
-                hijackScript: getTimeHijackScript(i, config.fps),
-                compositionId,
-                inputProps
-            });
-            await page.waitForFunction(() => !(window.__OPEN_MOTION_DELAY_RENDER_COUNT__ > 0), { timeout: 30000 });
+            else {
+                // Update frame for subsequent renders if needed
+                // (Currently the renderer restarts or reloads, but if it stays on same page:
+                await page.evaluate(({ frame, fps, hijackScript }) => {
+                    window.__OPEN_MOTION_FRAME__ = frame;
+                    eval(hijackScript);
+                    window.dispatchEvent(new CustomEvent('open-motion-frame-update', { detail: { frame } }));
+                }, {
+                    frame: i,
+                    fps: config.fps,
+                    hijackScript: getTimeHijackScript(i, config.fps),
+                });
+            }
+            await page.waitForFunction(() => window.__OPEN_MOTION_READY__ === true &&
+                !(window.__OPEN_MOTION_DELAY_RENDER_COUNT__ > 0), { timeout: 30000 });
             await page.waitForLoadState('networkidle');
             // Extract audio assets from the first frame or each frame
             if (workerId === 0 && i === 0) {

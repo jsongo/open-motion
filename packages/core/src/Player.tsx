@@ -20,8 +20,23 @@ export const Player: React.FC<PlayerProps> = ({
 }) => {
   const [frame, setFrame] = useState(0);
   const [isPlaying, setIsPlaying] = useState(autoPlay);
+  const [scale, setScale] = useState(1);
+  const containerRef = useRef<HTMLDivElement>(null);
   const requestRef = useRef<number>();
   const lastTimeRef = useRef<number>();
+
+  useEffect(() => {
+    const handleResize = () => {
+      if (containerRef.current) {
+        const parentWidth = containerRef.current.parentElement?.clientWidth || window.innerWidth;
+        const s = Math.min(1, (parentWidth - 40) / config.width);
+        if (s > 0) setScale(s);
+      }
+    };
+    handleResize();
+    window.addEventListener('resize', handleResize);
+    return () => window.removeEventListener('resize', handleResize);
+  }, [config.width]);
 
   const animate = useCallback((time: number) => {
     if (lastTimeRef.current !== undefined) {
@@ -69,14 +84,24 @@ export const Player: React.FC<PlayerProps> = ({
   };
 
   return (
-    <div style={{ display: 'inline-block', border: '1px solid #ccc', borderRadius: '4px', overflow: 'hidden' }}>
+    <div
+      ref={containerRef}
+      style={{
+        display: 'inline-block',
+        border: '1px solid #ccc',
+        borderRadius: '4px',
+        overflow: 'hidden',
+        background: '#f0f0f0',
+        width: config.width * scale,
+      }}
+    >
       <div
         style={{
           width: config.width,
           height: config.height,
-          position: 'relative',
-          background: '#000',
-          overflow: 'hidden'
+          transform: `scale(${scale})`,
+          transformOrigin: 'top left',
+          background: '#fff'
         }}
       >
         <CompositionProvider config={config} frame={Math.floor(frame)} inputProps={inputProps}>
@@ -85,7 +110,7 @@ export const Player: React.FC<PlayerProps> = ({
       </div>
 
       {controls && (
-        <div style={{ padding: '10px', background: '#f0f0f0', display: 'flex', alignItems: 'center', gap: '10px' }}>
+        <div style={{ padding: '10px', background: '#f0f0f0', display: 'flex', alignItems: 'center', gap: '10px', position: 'relative', zIndex: 10 }}>
           <button onClick={togglePlay}>
             {isPlaying ? 'Pause' : 'Play'}
           </button>
@@ -98,7 +123,7 @@ export const Player: React.FC<PlayerProps> = ({
             onChange={handleSeek}
             style={{ flex: 1 }}
           />
-          <div style={{ minWidth: '80px', fontSize: '12px', textAlign: 'right' }}>
+          <div style={{ minWidth: '80px', fontSize: '12px', textAlign: 'right', color: '#000' }}>
             {Math.floor(frame)} / {config.durationInFrames}
           </div>
         </div>

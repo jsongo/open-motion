@@ -42,7 +42,15 @@ The OpenMotion ecosystem is modular:
 
 ## 🚀 Quick Start
 
-### 1. Define your composition
+### 1. Initialize a new project
+
+```bash
+npx @open-motion/cli init my-video
+cd my-video
+pnpm install
+```
+
+### 2. Define your composition
 
 ```tsx
 import {
@@ -85,23 +93,30 @@ export const Root = () => (
 );
 ```
 
-### 2. Preview locally
+### 3. Preview locally
 
 ```bash
-cd examples/hello-world
 pnpm dev
 ```
 
-### 3. Render to MP4
+### 4. Render to MP4
 
 ```bash
-open-motion render \
-  --url http://localhost:3000 \
+npx open-motion render \
+  --url http://localhost:5173 \
   --out ./output.mp4 \
   --composition HelloWorld \
   --props '{"title": "Custom Data"}' \
   --concurrency 4
 ```
+
+## 📂 Examples
+
+Explore our examples to see OpenMotion in action:
+
+- [`hello-world`](./examples/hello-world): Minimal setup with basic animations and Lottie support.
+- [`demo`](./examples/demo): Full-featured demo showcasing physical springs, sequences, async assets (remote images), and dynamic props.
+
 
 ## 🛠 Installation
 

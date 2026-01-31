@@ -11,9 +11,9 @@ export declare const CompositionProvider: React.FC<{
     inputProps?: any;
     children: React.ReactNode;
 }>;
-export declare const useVideoConfig: () => any;
-export declare const useCurrentFrame: () => any;
-export declare const useAbsoluteFrame: () => any;
+export declare const useVideoConfig: () => VideoConfig;
+export declare const useCurrentFrame: () => number;
+export declare const useAbsoluteFrame: () => number;
 export declare const getInputProps: <T extends any>() => T;
 export interface CompositionProps extends VideoConfig {
     id: string;
@@ -44,12 +44,10 @@ export declare const interpolate: (input: number, inputRange: [number, number], 
 }) => number;
 /**
  * Time Hijacking Bridge Script
- * This script will be injected by Playwright to mock browser timing.
  */
 export declare const getTimeHijackScript: (frame: number, fps: number) => string;
 /**
  * Sequence Component
- * Handles time offsetting for nested components.
  */
 export declare const Sequence: React.FC<{
     from: number;
@@ -69,7 +67,7 @@ export declare const spring: ({ frame, fps, config, }: {
     };
 }) => number;
 /**
- * Audio Component (Stub for timeline marking)
+ * Audio Component
  */
 export declare const Audio: React.FC<{
     src: string;

@@ -49,23 +49,44 @@ export const renderFrames = async ({ url, config, outputDir, compositionId, inpu
 
     for (let i = startFrame; i <= endFrame && i < config.durationInFrames; i++) {
       if (i === startFrame) {
+        await page.addInitScript(({ frame, fps, hijackScript, compositionId, inputProps }) => {
+          (window as any).__OPEN_MOTION_FRAME__ = frame;
+          (window as any).__OPEN_MOTION_COMPOSITION_ID__ = compositionId;
+          (window as any).__OPEN_MOTION_INPUT_PROPS__ = inputProps;
+
+          // Execute hijack script
+          const script = document.createElement('script');
+          script.textContent = hijackScript;
+          document.documentElement.appendChild(script);
+          script.remove();
+        }, {
+          frame: i,
+          fps: config.fps,
+          hijackScript: getTimeHijackScript(i, config.fps),
+          compositionId,
+          inputProps
+        });
+
         await page.goto(url);
+      } else {
+        // Update frame for subsequent renders if needed
+        // (Currently the renderer restarts or reloads, but if it stays on same page:
+        await page.evaluate(({ frame, fps, hijackScript }) => {
+          (window as any).__OPEN_MOTION_FRAME__ = frame;
+          eval(hijackScript);
+          window.dispatchEvent(new CustomEvent('open-motion-frame-update', { detail: { frame } }));
+        }, {
+          frame: i,
+          fps: config.fps,
+          hijackScript: getTimeHijackScript(i, config.fps),
+        });
       }
 
-      await page.evaluate(({ frame, fps, hijackScript, compositionId, inputProps }) => {
-        (window as any).__OPEN_MOTION_FRAME__ = frame;
-        (window as any).__OPEN_MOTION_COMPOSITION_ID__ = compositionId;
-        (window as any).__OPEN_MOTION_INPUT_PROPS__ = inputProps;
-        eval(hijackScript);
-      }, {
-        frame: i,
-        fps: config.fps,
-        hijackScript: getTimeHijackScript(i, config.fps),
-        compositionId,
-        inputProps
-      });
-
-      await page.waitForFunction(() => !((window as any).__OPEN_MOTION_DELAY_RENDER_COUNT__ > 0), { timeout: 30000 });
+      await page.waitForFunction(() =>
+        (window as any).__OPEN_MOTION_READY__ === true &&
+        !((window as any).__OPEN_MOTION_DELAY_RENDER_COUNT__ > 0),
+        { timeout: 30000 }
+      );
       await page.waitForLoadState('networkidle');
 
       // Extract audio assets from the first frame or each frame

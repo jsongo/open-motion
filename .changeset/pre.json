@@ -2,11 +2,11 @@
   "mode": "pre",
   "tag": "alpha",
   "initialVersions": {
-    "hello-world-example": "0.1.0",
-    "@open-motion/cli": "0.1.0",
-    "@open-motion/core": "0.1.0",
-    "@open-motion/encoder": "0.1.0",
-    "@open-motion/renderer": "0.1.0"
+    "hello-world-example": "0.0.1-alpha.0",
+    "@open-motion/cli": "0.0.1-alpha.0",
+    "@open-motion/core": "0.0.1-alpha.0",
+    "@open-motion/encoder": "0.0.1-alpha.0",
+    "@open-motion/renderer": "0.0.1-alpha.0"
   },
   "changesets": []
 }
