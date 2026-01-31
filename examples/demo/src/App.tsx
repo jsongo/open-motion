@@ -1,8 +1,9 @@
-import React from 'react';
+import React, { useEffect } from 'react';
 import {
   CompositionProvider,
   Composition,
-  Player
+  Player,
+  registerComposition
 } from '@open-motion/core';
 
 // Scenes
@@ -23,6 +24,16 @@ export const App = () => {
     video: { width: 1280, height: 720, fps: 30, durationInFrames: 150 },
   };
 
+  // Ensure all compositions are registered
+  useEffect(() => {
+    registerComposition({ id: 'main', component: DemoVideo, ...configs.main });
+    registerComposition({ id: 'interpolation', component: MovingBox, ...configs.interpolation });
+    registerComposition({ id: 'dashboard', component: Dashboard, ...configs.dashboard });
+    registerComposition({ id: 'audio', component: AudioShowcase, ...configs.audio });
+    registerComposition({ id: 'easing', component: EasingShowcase, ...configs.easing });
+    registerComposition({ id: 'video', component: VideoShowcase, ...configs.video });
+  }, []);
+
   const isRendering = typeof (window as any).__OPEN_MOTION_FRAME__ === 'number';
 
   if (isRendering) {
@@ -39,6 +50,9 @@ export const App = () => {
       case 'easing': Component = EasingShowcase; config = configs.easing; break;
       case 'video': Component = VideoShowcase; config = configs.video; break;
     }
+
+    // Even in rendering mode, we must ensure the composition is known
+    registerComposition({ id: compositionId, component: Component, ...config });
 
     return (
       <CompositionProvider

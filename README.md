@@ -21,7 +21,7 @@
 OpenMotion is a high-performance, open-source alternative to Remotion. It allows you to create frame-perfect videos using familiar React components, hooks, and your favorite CSS libraries. Whether you're building automated marketing videos, personalized content, or dynamic data visualizations, OpenMotion provides the core engine to turn your React code into high-quality MP4s.
 
 <p align="center">
-  <video src="https://raw.githubusercontent.com/jsongo/open-motion/main/assets/demo-showcase.mp4" width="100%" controls autoplay loop muted></video>
+  <video src="assets/demo-main.mp4" width="100%" controls autoplay loop muted></video>
 </p>
 
 ## ✨ Features
@@ -122,8 +122,16 @@ npx open-motion render \
 
 Explore our examples to see OpenMotion in action:
 
-- [`hello-world`](./examples/hello-world): Minimal setup with basic animations and Lottie support.
-- [`demo`](./examples/demo): Full-featured demo showcasing physical springs, sequences, async assets (remote images), and dynamic props.
+- [`hello-world`](./examples/hello-world): Minimal setup with basic animations.
+- [`demo`](./examples/demo): Professional showcase with multi-track audio, easing curves, advanced video components, and data dashboard.
+
+### Showcase Videos
+
+| Multi-track Audio | Easing Curves |
+| :--- | :--- |
+| <video src="assets/demo-audio.mp4" width="400" controls></video> | <video src="assets/demo-easing.mp4" width="400" controls></video> |
+| **Data Dashboard** | **Video Components** |
+| <video src="assets/demo-main.mp4" width="400" controls></video> | <video src="assets/demo-video.mp4" width="400" controls></video> |
 
 
 ## 🛠 Installation

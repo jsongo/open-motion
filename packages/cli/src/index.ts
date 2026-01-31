@@ -255,7 +255,17 @@ export const main = () => {
     .option('--duration <number>', 'Override duration in frames', parseInt)
     .action(async (options) => {
       try {
-        await runRender(options);
+        await runRender({
+          url: options.url,
+          out: options.out,
+          compositionId: options.composition,
+          props: options.props,
+          concurrency: options.concurrency,
+          width: options.width,
+          height: options.height,
+          fps: options.fps,
+          duration: options.duration
+        });
       } catch (err) {
         console.error('Render failed:', err);
         process.exit(1);
