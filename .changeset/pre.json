@@ -6,7 +6,12 @@
     "@open-motion/cli": "0.0.1-alpha.0",
     "@open-motion/core": "0.0.1-alpha.0",
     "@open-motion/encoder": "0.0.1-alpha.0",
-    "@open-motion/renderer": "0.0.1-alpha.0"
+    "@open-motion/renderer": "0.0.1-alpha.0",
+    "demo-example": "0.1.0"
   },
-  "changesets": []
+  "changesets": [
+    "alpha-2-bump",
+    "fix-rendering-and-arch",
+    "patch-release"
+  ]
 }

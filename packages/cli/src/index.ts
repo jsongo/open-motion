@@ -48,7 +48,7 @@ export const runInit = async (projectName: string) => {
   <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>${projectName}</title>
+    <title>\${projectName}</title>
   </head>
   <body>
     <div id="root"></div>
@@ -57,14 +57,16 @@ export const runInit = async (projectName: string) => {
 </html>`,
     'vite.config.ts': `import { defineConfig } from 'vite';
 import react from '@vitejs/plugin-react';
+import path from 'path';
 
 export default defineConfig({
   plugins: [react()],
   resolve: {
+    alias: {
+      'react': path.resolve(__dirname, 'node_modules/react'),
+      'react-dom': path.resolve(__dirname, 'node_modules/react-dom'),
+    },
     dedupe: ['react', 'react-dom'],
-  },
-  optimizeDeps: {
-    include: ['react', 'react-dom'],
   },
 });`,
     'src/main.tsx': `import React from 'react';
@@ -135,9 +137,9 @@ export const App = () => {
     fs.writeFileSync(path.join(targetDir, name), content);
   }
 
-  console.log(`Success! Project ${projectName} initialized.`);
+  console.log(`Success! Project \${projectName} initialized.`);
   console.log(`Next steps:`);
-  console.log(`  cd ${projectName}`);
+  console.log(`  cd \${projectName}`);
   console.log(`  npm install (or pnpm install)`);
   console.log(`  npm run dev`);
 };

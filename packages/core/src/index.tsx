@@ -18,13 +18,13 @@ export const CompositionProvider: React.FC<{
   inputProps?: any;
   children: React.ReactNode;
 }> = ({ config, frame, inputProps = {}, children }) => {
+  const [currentFrame, setCurrentFrame] = React.useState(frame);
+
   React.useEffect(() => {
     if (typeof window !== 'undefined') {
       (window as any).__OPEN_MOTION_READY__ = true;
     }
-  }, []);
-
-  const [currentFrame, setCurrentFrame] = React.useState(frame);
+  }, [currentFrame]);
 
   React.useEffect(() => {
     setCurrentFrame(frame);

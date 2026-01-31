@@ -53,6 +53,7 @@ export const renderFrames = async ({ url, config, outputDir, compositionId, inpu
           (window as any).__OPEN_MOTION_FRAME__ = frame;
           (window as any).__OPEN_MOTION_COMPOSITION_ID__ = compositionId;
           (window as any).__OPEN_MOTION_INPUT_PROPS__ = inputProps;
+          (window as any).__OPEN_MOTION_READY__ = false;
 
           // Execute hijack script
           const script = document.createElement('script');
@@ -69,9 +70,9 @@ export const renderFrames = async ({ url, config, outputDir, compositionId, inpu
 
         await page.goto(url);
       } else {
-        // Update frame for subsequent renders if needed
-        // (Currently the renderer restarts or reloads, but if it stays on same page:
+        // Update frame for subsequent renders
         await page.evaluate(({ frame, fps, hijackScript }) => {
+          (window as any).__OPEN_MOTION_READY__ = false;
           (window as any).__OPEN_MOTION_FRAME__ = frame;
           eval(hijackScript);
           window.dispatchEvent(new CustomEvent('open-motion-frame-update', { detail: { frame } }));
@@ -86,7 +87,7 @@ export const renderFrames = async ({ url, config, outputDir, compositionId, inpu
         const ready = (window as any).__OPEN_MOTION_READY__ === true;
         const delayCount = (window as any).__OPEN_MOTION_DELAY_RENDER_COUNT__ || 0;
         return ready && delayCount === 0;
-      }, { timeout: 30000 });
+      }, { timeout: 60000 });
       await page.waitForLoadState('networkidle');
 
       // Additional small wait to ensure style/layout stability

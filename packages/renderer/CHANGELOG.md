@@ -1,0 +1,19 @@
+# @open-motion/renderer
+
+## 0.0.1-alpha.2
+
+### Patch Changes
+
+- Bumping versions to next alpha release with fixed core interpolation and async rendering stability.
+- Updated dependencies
+  - @open-motion/core@0.0.1-alpha.2
+
+## 0.0.1-alpha.1
+
+### Patch Changes
+
+- fix: resolve empty frame rendering issue by adding robust synchronization and improve monorepo architecture stability
+- Improve async asset loading, multi-segment interpolation support, and rendering stability.
+- Updated dependencies
+- Updated dependencies
+  - @open-motion/core@0.0.1-alpha.1
