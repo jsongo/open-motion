@@ -1,5 +1,19 @@
 # @open-motion/cli
 
+## 0.0.1
+
+### Patch Changes
+
+- e7cea38: Bumping versions to next alpha release with fixed core interpolation and async rendering stability.
+- e7cea38: fix: resolve empty frame rendering issue by adding robust synchronization and improve monorepo architecture stability
+- e7cea38: Improve async asset loading, multi-segment interpolation support, and rendering stability.
+- Updated dependencies [e7cea38]
+- Updated dependencies [e7cea38]
+- Updated dependencies [e7cea38]
+  - @open-motion/core@0.0.1
+  - @open-motion/renderer@0.0.1
+  - @open-motion/encoder@0.0.1
+
 ## 0.0.1-alpha.2
 
 ### Patch Changes
