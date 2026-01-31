@@ -2,40 +2,81 @@ import ffmpeg from 'fluent-ffmpeg';
 import path from 'path';
 import fs from 'fs';
 
+export interface AudioAsset {
+  src: string;
+  startFrame: number;
+  startFrom?: number;
+  volume?: number;
+}
+
 export interface EncodeOptions {
   framesDir: string;
   fps: number;
   outputFile: string;
-  audioFile?: string;
+  audioAssets?: AudioAsset[];
+  onProgress?: (percent: number) => void;
 }
 
-export const encodeVideo = ({ framesDir, fps, outputFile, audioFile }: EncodeOptions) => {
+export const encodeVideo = ({ framesDir, fps, outputFile, audioAssets = [], onProgress }: EncodeOptions) => {
   // Verify frames exist
   const files = fs.readdirSync(framesDir).filter(f => f.startsWith('frame-') && f.endsWith('.png'));
   if (files.length === 0) {
     throw new Error(`No frames found in ${framesDir}`);
   }
-  console.log(`Found ${files.length} frames for encoding.`);
+  // console.log(`Found ${files.length} frames for encoding.`);
 
   return new Promise((resolve, reject) => {
     const command = ffmpeg()
       .input(path.join(framesDir, 'frame-%05d.png'))
-      .inputFPS(fps)
-      .outputOptions([
-        '-c:v libx264',
-        '-pix_fmt yuv420p',
-        '-crf 18'
-      ]);
+      .inputFPS(fps);
 
-    if (audioFile) {
-      command.input(audioFile);
+    // Add audio inputs
+    audioAssets.forEach(asset => {
+      command.input(asset.src);
+    });
+
+    const videoOptions = [
+      '-c:v libx264',
+      '-pix_fmt yuv420p',
+      '-crf 18'
+    ];
+
+    if (audioAssets.length > 0) {
+      const filters = audioAssets.map((asset, i) => {
+        const delayMs = Math.round((asset.startFrame / fps) * 1000);
+        const startFromSec = (asset.startFrom || 0) / fps;
+        const volume = asset.volume ?? 1;
+
+        // Input index i+1 because input 0 is the video frames
+        return `[${i + 1}:a]atrim=start=${startFromSec},asetpts=PTS-STARTPTS,adelay=${delayMs}|${delayMs},volume=${volume}[a${i}]`;
+      });
+
+      const mixInput = audioAssets.map((_, i) => `[a${i}]`).join('');
+      filters.push(`${mixInput}amix=inputs=${audioAssets.length}:duration=first[a]`);
+
+      command.complexFilter(filters);
+      command.outputOptions([
+        ...videoOptions,
+        '-map 0:v',
+        '-map [a]',
+        '-c:a aac',
+        '-shortest'
+      ]);
+    } else {
+      command.outputOptions(videoOptions);
     }
 
     command
-      .on('start', (cmd) => console.log('FFmpeg started with command:', cmd))
-      .on('progress', (progress) => console.log('Encoding progress:', progress.percent, '%'))
+      .on('start', (cmd) => {
+        // console.log('FFmpeg started with command:', cmd)
+      })
+      .on('progress', (progress) => {
+        if (progress.percent && onProgress) {
+          onProgress(progress.percent);
+        }
+      })
       .on('end', () => {
-        console.log('Encoding finished.');
+        // console.log('Encoding finished.');
         resolve(outputFile);
       })
       .on('error', (err) => {

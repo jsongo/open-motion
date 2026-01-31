@@ -29,6 +29,10 @@ OpenMotion is a high-performance, open-source alternative to Remotion. It allows
 - ⚛️ **React-First**: Use the full power of the React ecosystem, including state, effects, and third-party libraries.
 - ⏱️ **Frame-Perfect Determinism**: Advanced time-hijacking of `Date`, `performance.now`, and `requestAnimationFrame` ensures every frame is rendered exactly as intended.
 - 🚀 **Parallel Rendering**: Multi-process rendering support out of the box. Scale your rendering speed by utilizing all CPU cores.
+- 🎵 **Multi-track Audio Mixing**: Support for multiple `<Audio />` components with independent timing, volume, and trimming.
+- 📈 **Professional Easing**: Built-in library for linear, ease, in/out, and bezier curves for smooth animations.
+- 📹 **Enhanced Video Component**: Support for `playbackRate`, `startFrom`, and `endAt` for sophisticated video editing.
+- 📊 **Visual Progress**: Real-time CLI progress bars for both frame rendering and video encoding.
 - 📦 **Asset Synchronization**: Robust `delayRender` and `continueRender` API to handle fonts, images, and Lottie animations seamlessly.
 - 🎛️ **Dynamic Input Props**: Drive your videos with external data. Pass JSON props via CLI to generate infinite variations of a single template.
 - 🎞️ **Interactive Player**: A built-in React component for real-time preview, scrubbing, and debugging.
@@ -140,9 +144,13 @@ npx playwright install chromium
 - [x] Multi-process parallel rendering.
 - [x] Dynamic Input Props injection.
 - [x] Async asset synchronization (`delayRender`).
-- [ ] Comprehensive Audio API (Volume levels, crossfades).
+- [x] Multi-track Audio mixing with volume & trimming.
+- [x] Professional Easing library.
+- [x] CLI Progress indicators.
 - [ ] Dedicated Studio Dashboard (Visual timeline, asset browser).
 - [ ] Distributed Rendering (AWS Lambda / Serverless support).
+- [ ] Subtitle/Caption system (.srt support).
+- [ ] Transition System (Crossfade, Slide).
 
 ## 🤝 Contributing
 

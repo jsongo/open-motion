@@ -10,6 +10,7 @@ export interface RenderOptions {
   compositionId?: string;
   inputProps?: any;
   concurrency?: number;
+  onProgress?: (frame: number) => void;
 }
 
 export const getCompositions = async (url: string) => {
@@ -29,13 +30,13 @@ export const getCompositions = async (url: string) => {
   return compositions;
 };
 
-export const renderFrames = async ({ url, config, outputDir, compositionId, inputProps = {}, concurrency = 1 }: RenderOptions) => {
+export const renderFrames = async ({ url, config, outputDir, compositionId, inputProps = {}, concurrency = 1, onProgress }: RenderOptions) => {
   if (!fs.existsSync(outputDir)) {
     fs.mkdirSync(outputDir, { recursive: true });
   }
 
   const framesPerWorker = Math.ceil(config.durationInFrames / concurrency);
-  const audioAssets: any[] = [];
+  let totalFramesRendered = 0;
 
   const renderBatch = async (startFrame: number, endFrame: number, workerId: number) => {
     const browser = await chromium.launch({
@@ -45,7 +46,7 @@ export const renderFrames = async ({ url, config, outputDir, compositionId, inpu
       viewport: { width: config.width, height: config.height }
     });
 
-    console.log(`Worker ${workerId}: Rendering frames ${startFrame} to ${endFrame}...`);
+    const workerAudioAssets: any[] = [];
 
     for (let i = startFrame; i <= endFrame && i < config.durationInFrames; i++) {
       if (i === startFrame) {
@@ -93,17 +94,21 @@ export const renderFrames = async ({ url, config, outputDir, compositionId, inpu
       // Additional small wait to ensure style/layout stability
       await page.evaluate(() => new Promise(resolve => setTimeout(resolve, 50)));
 
-      // Extract audio assets from the first frame or each frame
-      if (workerId === 0 && i === 0) {
-        const assets = await page.evaluate(() => (window as any).__OPEN_MOTION_AUDIO_ASSETS__ || []);
-        audioAssets.push(...assets);
-      }
+      // Extract audio assets from each frame to catch late-entering audio
+      const assets = await page.evaluate(() => (window as any).__OPEN_MOTION_AUDIO_ASSETS__ || []);
+      workerAudioAssets.push(...assets);
 
       const screenshotPath = path.join(outputDir, `frame-${i.toString().padStart(5, '0')}.png`);
       await page.screenshot({ path: screenshotPath, type: 'png' });
+
+      totalFramesRendered++;
+      if (onProgress) {
+        onProgress(totalFramesRendered);
+      }
     }
 
     await browser.close();
+    return workerAudioAssets;
   };
 
   const workers = [];
@@ -111,7 +116,19 @@ export const renderFrames = async ({ url, config, outputDir, compositionId, inpu
     workers.push(renderBatch(i * framesPerWorker, (i + 1) * framesPerWorker - 1, i));
   }
 
-  await Promise.all(workers);
+  const results = await Promise.all(workers);
+  const allAudioAssets = results.flat();
+
+  // Unique audio assets based on src, startFrom, startFrame, and volume
+  const uniqueAudioAssets = Array.from(
+    new Map(
+      allAudioAssets.map((asset) => [
+        `${asset.src}-${asset.startFrom || 0}-${asset.startFrame || 0}-${asset.volume || 1}`,
+        asset,
+      ])
+    ).values()
+  );
+
   console.log('Frame rendering complete.');
-  return { audioAssets };
+  return { audioAssets: uniqueAudioAssets };
 };

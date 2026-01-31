@@ -142,6 +142,31 @@ export const continueRender = (handle: number) => {
 };
 
 /**
+ * Easing functions
+ */
+export type EasingFunction = (t: number) => number;
+
+export const Easing = {
+  linear: (t: number) => t,
+  ease: (t: number) => t * t * (3 - 2 * t),
+  in: (t: number) => t * t,
+  out: (t: number) => t * (2 - t),
+  inOut: (t: number) => (t < 0.5 ? 2 * t * t : -1 + (4 - 2 * t) * t),
+  bezier: (_x1: number, y1: number, _x2: number, y2: number) => {
+    // Simple cubic bezier approximation (y-only for now)
+    return (t: number) => {
+      const u = 1 - t;
+      const tt = t * t;
+      const uu = u * u;
+      const ttt = tt * t;
+      // P0=0, P3=1
+      return 3 * uu * t * y1 + 3 * u * tt * y2 + ttt;
+    };
+  },
+  step: (t: number) => (t < 0.5 ? 0 : 1),
+};
+
+/**
  * interpolate function: maps a value from one range to another.
  * Compatible with Remotion's interpolate.
  */
@@ -149,7 +174,11 @@ export const interpolate = (
   input: number,
   inputRange: number[],
   outputRange: number[],
-  options?: { extrapolateLeft?: 'extrapolate' | 'clamp'; extrapolateRight?: 'extrapolate' | 'clamp' }
+  options?: {
+    extrapolateLeft?: 'extrapolate' | 'clamp';
+    extrapolateRight?: 'extrapolate' | 'clamp';
+    easing?: EasingFunction;
+  }
 ) => {
   if (inputRange.length < 2) return outputRange[0];
 
@@ -161,7 +190,11 @@ export const interpolate = (
     const maxOutput = outputRange[i + 1];
 
     if (input >= minInput && input <= maxInput) {
-      return minOutput + ((input - minInput) / (maxInput - minInput)) * (maxOutput - minOutput);
+      let progress = (input - minInput) / (maxInput - minInput);
+      if (options?.easing) {
+        progress = options.easing(progress);
+      }
+      return minOutput + progress * (maxOutput - minOutput);
     }
   }
 
@@ -175,7 +208,11 @@ export const interpolate = (
     // Extrapolate using first segment
     const nextInput = inputRange[1];
     const nextOutput = outputRange[1];
-    return firstOutput + ((input - firstInput) / (nextInput - firstInput)) * (nextOutput - firstOutput);
+    let progress = (input - firstInput) / (nextInput - firstInput);
+    if (options?.easing) {
+      progress = options.easing(progress);
+    }
+    return firstOutput + progress * (nextOutput - firstOutput);
   }
 
   if (input > lastInput) {
@@ -183,7 +220,11 @@ export const interpolate = (
     // Extrapolate using last segment
     const prevInput = inputRange[inputRange.length - 2];
     const prevOutput = outputRange[outputRange.length - 2];
-    return lastOutput + ((input - lastInput) / (lastInput - prevInput)) * (lastOutput - prevOutput);
+    let progress = (input - lastInput) / (lastInput - prevInput);
+    if (options?.easing) {
+      progress = options.easing(progress);
+    }
+    return lastOutput + progress * (lastOutput - prevOutput);
   }
 
   return firstOutput;
@@ -277,10 +318,21 @@ export const Audio: React.FC<{
   startFrom?: number;
   volume?: number;
 }> = (props) => {
+  const startFrame = useAbsoluteFrame();
   if (typeof window !== 'undefined') {
     (window as any).__OPEN_MOTION_AUDIO_ASSETS__ = (window as any).__OPEN_MOTION_AUDIO_ASSETS__ || [];
-    if (!(window as any).__OPEN_MOTION_AUDIO_ASSETS__.find((a: any) => a.src === props.src)) {
-      (window as any).__OPEN_MOTION_AUDIO_ASSETS__.push(props);
+    const exists = (window as any).__OPEN_MOTION_AUDIO_ASSETS__.find(
+      (a: any) =>
+        a.src === props.src &&
+        (a.startFrom || 0) === (props.startFrom || 0) &&
+        (a.volume || 1) === (props.volume || 1) &&
+        a.startFrame === startFrame
+    );
+    if (!exists) {
+      (window as any).__OPEN_MOTION_AUDIO_ASSETS__.push({
+        ...props,
+        startFrame,
+      });
     }
   }
   return null;
@@ -293,25 +345,31 @@ export const Audio: React.FC<{
 export const Video: React.FC<{
   src: string;
   startFrom?: number;
+  endAt?: number;
+  playbackRate?: number;
   muted?: boolean;
   volume?: number;
   style?: React.CSSProperties;
-}> = ({ src, startFrom = 0, muted = true, volume = 1, style }) => {
+}> = ({ src, startFrom = 0, endAt, playbackRate = 1, muted = true, volume = 1, style }) => {
   const frame = useCurrentFrame();
   const { fps } = useVideoConfig();
   const videoRef = React.useRef<HTMLVideoElement>(null);
 
+  const isVisible = endAt === undefined || frame < endAt;
+
   React.useEffect(() => {
     const video = videoRef.current;
-    if (!video) return;
+    if (!video || !isVisible) return;
 
-    const targetTime = (frame + startFrom) / fps;
+    const targetTime = (frame * playbackRate + startFrom) / fps;
 
     // Only seek if the difference is significant to avoid jitter
     if (Math.abs(video.currentTime - targetTime) > 0.001) {
       video.currentTime = targetTime;
     }
-  }, [frame, fps, startFrom]);
+  }, [frame, fps, startFrom, playbackRate, isVisible]);
+
+  if (!isVisible) return null;
 
   return (
     <video

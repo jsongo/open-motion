@@ -3,6 +3,7 @@ import { encodeVideo } from '@open-motion/encoder';
 import path from 'path';
 import fs from 'fs';
 import { Command } from 'commander';
+import cliProgress from 'cli-progress';
 
 export const runInit = async (projectName: string) => {
   const targetDir = path.join(process.cwd(), projectName);
@@ -184,26 +185,40 @@ export const runRender = async (options: {
 
   console.log(`Rendering composition: ${selectedComp.id} (${config.width}x${config.height}, ${config.fps}fps, ${config.durationInFrames} frames)`);
 
+  const multibar = new cliProgress.MultiBar({
+    clearOnComplete: false,
+    hideCursor: true,
+    format: ' {bar} | {percentage}% | {value}/{total} | {task}',
+  }, cliProgress.Presets.shades_grey);
+
+  const renderBar = multibar.create(config.durationInFrames, 0, { task: 'Rendering' });
+
   const { audioAssets } = await renderFrames({
     url: options.url,
     config,
     outputDir: tmpDir,
     compositionId: selectedComp.id,
     inputProps,
-    concurrency: options.concurrency || 1
+    concurrency: options.concurrency || 1,
+    onProgress: (frame) => renderBar.update(frame)
   });
 
-  // Handle first audio asset for now (simplified)
-  const audioFile = audioAssets.length > 0 ? audioAssets[0].src : undefined;
+  renderBar.update(config.durationInFrames);
+
+  const encodeBar = multibar.create(100, 0, { task: 'Encoding ' });
 
   await encodeVideo({
     framesDir: tmpDir,
     fps: config.fps,
     outputFile: options.out,
-    audioFile
+    audioAssets,
+    onProgress: (percent) => encodeBar.update(Math.round(percent))
   });
 
-  console.log(`Success! Video rendered to ${options.out}`);
+  encodeBar.update(100);
+  multibar.stop();
+
+  console.log(`\nSuccess! Video rendered to ${options.out}`);
 };
 
 export const main = () => {
