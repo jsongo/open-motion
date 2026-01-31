@@ -4,7 +4,6 @@ on:
   push:
     branches:
       - main
-      - fix/ci-lockfile-and-sync
   pull_request:
     branches:
       - main
