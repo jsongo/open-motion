@@ -6,7 +6,6 @@
 
 - Updated dependencies [cf73703]
 - Updated dependencies [cf73703]
-- Updated dependencies
 - Updated dependencies [cf73703]
   - @open-motion/core@0.0.2
 

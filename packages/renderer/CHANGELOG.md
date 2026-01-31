@@ -10,7 +10,6 @@
 - cf73703: Improve async asset loading, multi-segment interpolation support, and rendering stability.
 - Updated dependencies [cf73703]
 - Updated dependencies [cf73703]
-- Updated dependencies
 - Updated dependencies [cf73703]
   - @open-motion/core@0.0.2
 
