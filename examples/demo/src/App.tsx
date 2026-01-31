@@ -107,7 +107,7 @@ const MovingBox = () => {
   const { width } = useVideoConfig();
 
   const opacity = interpolate(frame, [0, 20, 70, 90], [0, 1, 1, 0]);
-  const x = interpolate(frame, [0, 90], [0, width - 100]);
+  const x = interpolate(frame, [0, 90], [0, width - 150]);
   const rotation = interpolate(frame, [30, 60], [0, 360], { extrapolateLeft: 'clamp', extrapolateRight: 'clamp' });
   const scale = interpolate(frame, [0, 20], [0.5, 1], { extrapolateLeft: 'clamp' });
 
@@ -145,6 +145,94 @@ const MovingBox = () => {
 
       <div style={{ position: 'absolute', top: 20, left: 20, color: 'white', fontSize: '20px' }}>
         Frame: {Math.floor(frame)}
+      </div>
+    </div>
+  );
+};
+
+const Dashboard = () => {
+  const frame = useCurrentFrame();
+  const { fps } = useVideoConfig();
+
+  // Multi-segment interpolation for a "loading" progress bar
+  const progress = interpolate(
+    frame,
+    [0, 30, 60, 90],
+    [0, 30, 35, 100], // Slower in the middle, then speeds up
+    { extrapolateRight: 'clamp' }
+  );
+
+  // Animated count
+  const count = interpolate(frame, [0, 90], [0, 4520], { extrapolateRight: 'clamp' });
+
+  return (
+    <div style={{
+      flex: 1,
+      backgroundColor: '#0f172a',
+      width: '100%',
+      height: '100%',
+      display: 'flex',
+      flexDirection: 'column',
+      justifyContent: 'center',
+      alignItems: 'center',
+      color: 'white',
+      fontFamily: 'monospace'
+    }}>
+      <div style={{ fontSize: 24, marginBottom: 40, color: '#94a3b8' }}>SYSTEM PERFORMANCE</div>
+
+      <div style={{ display: 'flex', gap: 40, marginBottom: 60 }}>
+        <div style={{ textAlign: 'center' }}>
+          <div style={{ fontSize: 14, color: '#64748b' }}>REQUESTS</div>
+          <div style={{ fontSize: 48, fontWeight: 'bold', color: '#38bdf8' }}>
+            {Math.floor(count).toLocaleString()}
+          </div>
+        </div>
+        <div style={{ textAlign: 'center' }}>
+          <div style={{ fontSize: 14, color: '#64748b' }}>UPTIME</div>
+          <div style={{ fontSize: 48, fontWeight: 'bold', color: '#4ade80' }}>
+            99.9%
+          </div>
+        </div>
+      </div>
+
+      <div style={{ width: '600px' }}>
+        <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: 10, fontSize: 12 }}>
+          <span>PROCESSING DATA...</span>
+          <span>{Math.floor(progress)}%</span>
+        </div>
+        <div style={{
+          width: '100%',
+          height: 10,
+          backgroundColor: '#1e293b',
+          borderRadius: 5,
+          overflow: 'hidden'
+        }}>
+          <div style={{
+            width: `${progress}%`,
+            height: '100%',
+            backgroundColor: '#38bdf8',
+            boxShadow: '0 0 10px #38bdf8'
+          }} />
+        </div>
+      </div>
+
+      <div style={{ marginTop: 60, display: 'flex', gap: 10 }}>
+        {[...Array(10)].map((_, i) => {
+          const barHeight = interpolate(
+            frame - i * 2,
+            [0, 20, 40],
+            [10, 40, 10],
+            { extrapolateLeft: 'clamp', extrapolateRight: 'clamp' }
+          );
+          return (
+            <div key={i} style={{
+              width: 20,
+              height: barHeight,
+              backgroundColor: '#38bdf8',
+              opacity: progress > i * 10 ? 1 : 0.2
+            }} />
+          );
+        })}
       </div>
     </div>
   );
@@ -260,16 +348,38 @@ export const App = () => {
     durationInFrames: 90
   };
 
+  const dashboardConfig = {
+    width: 1280,
+    height: 720,
+    fps: 30,
+    durationInFrames: 120
+  };
+
   const isRendering = typeof (window as any).__OPEN_MOTION_FRAME__ === 'number';
 
   if (isRendering) {
     const inputProps = (window as any).__OPEN_MOTION_INPUT_PROPS__ || {};
-    // Default to DemoVideo if no specific composition is selected,
-    // but in rendering mode the Player usually isn't used.
-    // The CLI/Renderer will look for Composition definitions.
+    const compositionId = (window as any).__OPEN_MOTION_COMPOSITION_ID__;
+
+    // Select the component based on the requested composition ID
+    let Component = DemoVideo;
+    let config = demoConfig;
+
+    if (compositionId === 'interpolation') {
+      Component = MovingBox;
+      config = interpolationConfig;
+    } else if (compositionId === 'dashboard') {
+      Component = Dashboard;
+      config = dashboardConfig;
+    }
+
     return (
-      <CompositionProvider config={demoConfig} frame={(window as any).__OPEN_MOTION_FRAME__} inputProps={inputProps}>
-        <DemoVideo />
+      <CompositionProvider
+        config={config}
+        frame={(window as any).__OPEN_MOTION_FRAME__}
+        inputProps={inputProps}
+      >
+        <Component />
       </CompositionProvider>
     );
   }
@@ -285,6 +395,7 @@ export const App = () => {
             component={DemoVideo}
             config={demoConfig}
             inputProps={{ title: 'The Future of Video', backgroundColor: '#e0f2fe' }}
+            autoPlay
             loop
           />
         </section>
@@ -294,6 +405,17 @@ export const App = () => {
           <Player
             component={MovingBox}
             config={interpolationConfig}
+            autoPlay
+            loop
+          />
+        </section>
+
+        <section>
+          <h3>Data Dashboard</h3>
+          <Player
+            component={Dashboard}
+            config={dashboardConfig}
+            autoPlay
             loop
           />
         </section>
@@ -309,6 +431,11 @@ export const App = () => {
           id="interpolation"
           component={MovingBox}
           {...interpolationConfig}
+        />
+        <Composition
+          id="dashboard"
+          component={Dashboard}
+          {...dashboardConfig}
         />
       </div>
     </div>
