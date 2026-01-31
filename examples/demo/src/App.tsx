@@ -10,7 +10,8 @@ import {
   Player,
   delayRender,
   continueRender,
-  Composition
+  Composition,
+  Video
 } from '@open-motion/core';
 import { Rocket, Star, Heart, Cloud, Sun } from 'lucide-react';
 
@@ -204,11 +205,27 @@ const DemoVideo = () => {
         </div>
       </Sequence>
 
-      {/* Scene 3: Async Assets */}
+      {/* Scene 3: Video & Async Assets */}
       <Sequence from={120} durationInFrames={90}>
-        <div style={{ textAlign: 'center' }}>
-          <div style={{ fontSize: 40, marginBottom: 20 }}>Remote Assets (Async)</div>
-          <AsyncImage src="https://picsum.photos/800/450" />
+        <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center' }}>
+          <div style={{ fontSize: 40, marginBottom: 20 }}>Video & Async Assets</div>
+          <div style={{ display: 'flex', gap: '20px', alignItems: 'center' }}>
+            <AsyncImage src="https://picsum.photos/400/225" />
+            <div style={{
+              width: '400px',
+              height: '225px',
+              borderRadius: '20px',
+              overflow: 'hidden',
+              boxShadow: '0 20px 40px rgba(0,0,0,0.2)',
+              backgroundColor: '#000'
+            }}>
+              <Video
+                src="https://commondatastorage.googleapis.com/gtv-videos-bucket/sample/BigBuckBunny.mp4"
+                style={{ width: '100%', height: '100%' }}
+                startFrom={1000} // Start from frame 1000 of the source video
+              />
+            </div>
+          </div>
         </div>
       </Sequence>
 

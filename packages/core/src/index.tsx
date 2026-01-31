@@ -286,4 +286,52 @@ export const Audio: React.FC<{
   return null;
 };
 
+/**
+ * Video Component
+ * Supports frame-accurate seeking and synchronization with the engine.
+ */
+export const Video: React.FC<{
+  src: string;
+  startFrom?: number;
+  muted?: boolean;
+  volume?: number;
+  style?: React.CSSProperties;
+}> = ({ src, startFrom = 0, muted = true, volume = 1, style }) => {
+  const frame = useCurrentFrame();
+  const { fps } = useVideoConfig();
+  const videoRef = React.useRef<HTMLVideoElement>(null);
+
+  React.useEffect(() => {
+    const video = videoRef.current;
+    if (!video) return;
+
+    const targetTime = (frame + startFrom) / fps;
+
+    // Only seek if the difference is significant to avoid jitter
+    if (Math.abs(video.currentTime - targetTime) > 0.001) {
+      video.currentTime = targetTime;
+    }
+  }, [frame, fps, startFrom]);
+
+  return (
+    <video
+      ref={videoRef}
+      src={src}
+      muted={muted}
+      playsInline
+      style={{
+        display: 'block',
+        objectFit: 'cover',
+        ...style,
+      }}
+      onLoadedMetadata={(e) => {
+        const video = e.currentTarget;
+        video.volume = volume;
+        // Ensure it's paused so we can control it via currentTime
+        video.pause();
+      }}
+    />
+  );
+};
+
 export * from './Player';
