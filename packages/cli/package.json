@@ -21,8 +21,12 @@
   ],
   "dependencies": {
     "@open-motion/core": "workspace:*",
-    "@open-motion/renderer": "workspace:*",
     "@open-motion/encoder": "workspace:*",
+    "@open-motion/renderer": "workspace:*",
+    "cli-progress": "^3.12.0",
     "commander": "^11.0.0"
+  },
+  "devDependencies": {
+    "@types/cli-progress": "^3.11.6"
   }
 }
