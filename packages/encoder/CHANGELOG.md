@@ -1,5 +1,13 @@
 # @open-motion/encoder
 
+## 0.0.2
+
+### Patch Changes
+
+- cf73703: Bumping versions to next alpha release with fixed core interpolation and async rendering stability.
+- cf73703: fix: resolve empty frame rendering issue by adding robust synchronization and improve monorepo architecture stability
+- feat: multi-track audio, easing library, and CLI progress bar
+
 ## 0.0.1
 
 ### Patch Changes
