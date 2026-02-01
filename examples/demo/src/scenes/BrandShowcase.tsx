@@ -7,29 +7,11 @@ import {
   Sequence,
   Easing
 } from '@open-motion/core';
+import { BreathingButton, SlideInItem, Typewriter } from '@open-motion/components';
 
 const ListItem: React.FC<{ label: string; index: number; delay: number }> = ({ label, index, delay }) => {
-  const frame = useCurrentFrame();
-  const { fps } = useVideoConfig();
-
-  const spr = spring({
-    frame: frame - delay - index * 5,
-    fps,
-    config: { stiffness: 100, damping: 12 }
-  });
-
-  const opacity = interpolate(spr, [0, 1], [0, 1]);
-  const translateX = interpolate(spr, [0, 1], [50, 0]);
-
   return (
-    <div style={{
-      display: 'flex',
-      alignItems: 'center',
-      gap: '12px',
-      marginBottom: '15px',
-      opacity,
-      transform: `translateX(${translateX}px)`
-    }}>
+    <SlideInItem index={index} delay={delay} style={{ display: 'flex', alignItems: 'center', gap: '12px', marginBottom: '15px' }}>
       <div style={{
         width: '24px',
         height: '24px',
@@ -42,7 +24,7 @@ const ListItem: React.FC<{ label: string; index: number; delay: number }> = ({ l
         fontSize: '12px'
       }}>✓</div>
       <span style={{ fontSize: '20px', color: '#2d3748', fontWeight: 500 }}>{label}</span>
-    </div>
+    </SlideInItem>
   );
 };
 
@@ -73,7 +55,7 @@ const Tag: React.FC<{ label: string; index: number; delay: number }> = ({ label,
 
 export const BrandShowcase = () => {
   const frame = useCurrentFrame();
-  const { width, height, fps } = useVideoConfig();
+  const { fps } = useVideoConfig();
 
   return (
     <div style={{ flex: 1, backgroundColor: '#e9e9e4', position: 'relative', fontFamily: 'system-ui, sans-serif' }}>
@@ -92,10 +74,12 @@ export const BrandShowcase = () => {
           </div>
           <div style={{
             marginTop: 20,
+            height: 30,
             opacity: interpolate(frame, [20, 40], [0, 1]),
-            transform: `translateY(${interpolate(frame, [20, 40], [20, 0], { easing: Easing.out })})px`
           }}>
-            <p style={{ fontSize: 24, color: '#4a5568' }}>AI驱动的品牌套件提取工具</p>
+            <p style={{ fontSize: 24, color: '#4a5568' }}>
+               <Typewriter text="AI驱动的品牌套件提取工具" delay={30} speed={2} />
+            </p>
           </div>
         </div>
       </Sequence>
@@ -106,7 +90,7 @@ export const BrandShowcase = () => {
           <h2 style={{ textAlign: 'center', fontSize: 48, color: '#1a202c', marginBottom: 60 }}>Brand Kit Extractor</h2>
           <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-around' }}>
             <img
-              src="https://picsum.photos/id/1/600/400"
+              src="https://picsum.photos/seed/picsum/600/400"
               style={{
                 width: 600,
                 borderRadius: 20,
@@ -136,7 +120,7 @@ export const BrandShowcase = () => {
           </div>
           <div style={{ display: 'flex', justifyContent: 'center' }}>
             <img
-              src="https://picsum.photos/id/2/800/500"
+              src="https://picsum.photos/seed/editor/800/500"
               style={{
                 width: 800,
                 borderRadius: 20,
@@ -161,21 +145,19 @@ export const BrandShowcase = () => {
                 { label: '随时编辑修改', icon: '✏️' },
                 { label: '一键导出使用', icon: '📲' }
               ].map((item, i) => (
-                <div key={i} style={{
+                <SlideInItem key={i} index={i} delay={10} distance={-30} style={{
                   display: 'flex',
                   alignItems: 'center',
                   gap: 15,
                   marginBottom: 30,
-                  opacity: interpolate(frame - 270, [10 + i * 10, 30 + i * 10], [0, 1]),
-                  transform: `translateX(${interpolate(frame - 270, [10 + i * 10, 30 + i * 10], [-20, 0])}px)`
                 }}>
                   <span style={{ fontSize: 32 }}>{item.icon}</span>
                   <span style={{ fontSize: 24, color: '#2d3748' }}>{item.label}</span>
-                </div>
+                </SlideInItem>
               ))}
             </div>
             <img
-              src="https://picsum.photos/id/3/600/400"
+              src="https://picsum.photos/seed/manage/600/400"
               style={{
                 width: 500,
                 borderRadius: 20,
@@ -209,31 +191,8 @@ export const BrandShowcase = () => {
             <p style={{ fontSize: 24, color: '#4a5568' }}>一键提取，智能分析</p>
           </div>
 
-          <div style={{
-            marginTop: 50,
-            opacity: interpolate(frame - 360, [30, 50], [0, 1]),
-            // 实现极其缓慢的缩放闪动效果
-            transform: `scale(${interpolate(
-              Math.sin((frame - 360) / 15), // 使用正弦函数实现平滑循环
-              [-1, 1],
-              [0.98, 1.05]
-            )})`
-          }}>
-            <div style={{
-              padding: '16px 40px',
-              backgroundColor: '#2d3748',
-              color: 'white',
-              borderRadius: '40px',
-              fontSize: '24px',
-              fontWeight: 600,
-              boxShadow: '0 10px 25px rgba(45, 55, 72, 0.3)',
-              cursor: 'pointer',
-              display: 'flex',
-              alignItems: 'center',
-              gap: '10px'
-            }}>
-              立即体验 <span style={{ fontSize: '20px' }}>→</span>
-            </div>
+          <div style={{ marginTop: 50, opacity: interpolate(frame - 360, [30, 50], [0, 1]) }}>
+            <BreathingButton text="立即体验 →" />
           </div>
 
           <div style={{

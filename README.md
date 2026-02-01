@@ -118,6 +118,18 @@ npx open-motion render \
   --concurrency 4
 ```
 
+## 🛠 Installation
+
+Getting started with OpenMotion is as simple as installing our CLI:
+
+```bash
+# Install globally
+npm install -g @open-motion/cli
+
+# Or use it directly via npx
+npx @open-motion/cli init my-video
+```
+
 ## 📂 Examples
 
 Explore our examples to see OpenMotion in action:
@@ -134,20 +146,6 @@ Explore our examples to see OpenMotion in action:
 | <img src="assets/demo-easing.gif" width="400" alt="Easing Showcase" /> | <img src="assets/demo-main.gif" width="400" alt="Data Dashboard" /> |
 | **Video Components** | |
 | <img src="assets/demo-video.gif" width="400" alt="Video Components" /> | |
-
-
-## 🛠 Installation
-
-```bash
-# Clone the repository
-git clone https://github.com/youruser/open-motion.git
-
-# Install dependencies
-pnpm install
-
-# Install Playwright browsers
-npx playwright install chromium
-```
 
 ## 🗺 Roadmap
 

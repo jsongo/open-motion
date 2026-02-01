@@ -73,3 +73,49 @@ export const SlideInItem: React.FC<{
     </div>
   );
 };
+
+/**
+ * A typewriter effect for text.
+ */
+export const Typewriter: React.FC<{
+  text: string;
+  speed?: number; // frames per character
+  delay?: number;
+  style?: React.CSSProperties;
+}> = ({ text, speed = 2, delay = 0, style }) => {
+  const frame = useCurrentFrame();
+  const charsShown = Math.max(0, Math.floor((frame - delay) / speed));
+  const visibleText = text.slice(0, charsShown);
+
+  return <span style={style}>{visibleText}</span>;
+};
+
+/**
+ * A progress bar that can be used for dashboards or status indicators.
+ */
+export const ProgressBar: React.FC<{
+  progress: number; // 0 to 1
+  color?: string;
+  height?: number;
+  backgroundColor?: string;
+  style?: React.CSSProperties;
+}> = ({ progress, color = '#3b82f6', height = 10, backgroundColor = '#e2e8f0', style }) => {
+  return (
+    <div style={{
+      width: '100%',
+      height,
+      backgroundColor,
+      borderRadius: height / 2,
+      overflow: 'hidden',
+      ...style
+    }}>
+      <div style={{
+        width: `${progress * 100}%`,
+        height: '100%',
+        backgroundColor: color,
+        borderRadius: height / 2,
+        transition: 'width 0.1s ease-out'
+      }} />
+    </div>
+  );
+};
