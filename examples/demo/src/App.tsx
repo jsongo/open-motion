@@ -14,26 +14,26 @@ import { AudioShowcase } from './scenes/AudioShowcase';
 import { EasingShowcase } from './scenes/EasingShowcase';
 import { VideoShowcase } from './scenes/VideoShowcase';
 
+const configs = {
+  main: { width: 1280, height: 720, fps: 30, durationInFrames: 300 },
+  interpolation: { width: 1280, height: 720, fps: 30, durationInFrames: 90 },
+  dashboard: { width: 1280, height: 720, fps: 30, durationInFrames: 120 },
+  audio: { width: 1280, height: 720, fps: 30, durationInFrames: 300 },
+  easing: { width: 1280, height: 720, fps: 30, durationInFrames: 120 },
+  video: { width: 1280, height: 720, fps: 30, durationInFrames: 150 },
+};
+
+// Immediate registration at module level for reliable CLI discovery
+if (typeof window !== 'undefined') {
+  registerComposition({ id: 'main', component: DemoVideo, ...configs.main });
+  registerComposition({ id: 'interpolation', component: MovingBox, ...configs.interpolation });
+  registerComposition({ id: 'dashboard', component: Dashboard, ...configs.dashboard });
+  registerComposition({ id: 'audio', component: AudioShowcase, ...configs.audio });
+  registerComposition({ id: 'easing', component: EasingShowcase, ...configs.easing });
+  registerComposition({ id: 'video', component: VideoShowcase, ...configs.video });
+}
+
 export const App = () => {
-  const configs = {
-    main: { width: 1280, height: 720, fps: 30, durationInFrames: 300 },
-    interpolation: { width: 1280, height: 720, fps: 30, durationInFrames: 90 },
-    dashboard: { width: 1280, height: 720, fps: 30, durationInFrames: 120 },
-    audio: { width: 1280, height: 720, fps: 30, durationInFrames: 300 },
-    easing: { width: 1280, height: 720, fps: 30, durationInFrames: 120 },
-    video: { width: 1280, height: 720, fps: 30, durationInFrames: 150 },
-  };
-
-  // Ensure all compositions are registered
-  useEffect(() => {
-    registerComposition({ id: 'main', component: DemoVideo, ...configs.main });
-    registerComposition({ id: 'interpolation', component: MovingBox, ...configs.interpolation });
-    registerComposition({ id: 'dashboard', component: Dashboard, ...configs.dashboard });
-    registerComposition({ id: 'audio', component: AudioShowcase, ...configs.audio });
-    registerComposition({ id: 'easing', component: EasingShowcase, ...configs.easing });
-    registerComposition({ id: 'video', component: VideoShowcase, ...configs.video });
-  }, []);
-
   const isRendering = typeof (window as any).__OPEN_MOTION_FRAME__ === 'number';
 
   if (isRendering) {
@@ -50,9 +50,6 @@ export const App = () => {
       case 'easing': Component = EasingShowcase; config = configs.easing; break;
       case 'video': Component = VideoShowcase; config = configs.video; break;
     }
-
-    // Even in rendering mode, we must ensure the composition is known
-    registerComposition({ id: compositionId, component: Component, ...config });
 
     return (
       <CompositionProvider
