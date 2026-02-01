@@ -19,8 +19,10 @@ export const getCompositions = async (url: string) => {
   await page.goto(url);
   await page.waitForLoadState('networkidle');
 
-  // Wait a bit for React to mount and compositions to register
-  await page.waitForFunction(() => (window as any).__OPEN_MOTION_COMPOSITIONS__ !== undefined, { timeout: 5000 }).catch(() => {});
+  // Wait for React to mount and all compositions to register
+  // We wait for the variable to exist AND for a small stabilization period
+  await page.waitForFunction(() => (window as any).__OPEN_MOTION_COMPOSITIONS__ !== undefined, { timeout: 10000 }).catch(() => {});
+  await page.evaluate(() => new Promise(resolve => setTimeout(resolve, 500)));
 
   const compositions = await page.evaluate(() => {
     return (window as any).__OPEN_MOTION_COMPOSITIONS__ || [];

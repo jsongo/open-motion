@@ -25,10 +25,10 @@ const configs = {
 
 // Immediate registration at module level for reliable CLI discovery
 if (typeof window !== 'undefined') {
+  registerComposition({ id: 'audio', component: AudioShowcase, ...configs.audio });
   registerComposition({ id: 'main', component: DemoVideo, ...configs.main });
   registerComposition({ id: 'interpolation', component: MovingBox, ...configs.interpolation });
   registerComposition({ id: 'dashboard', component: Dashboard, ...configs.dashboard });
-  registerComposition({ id: 'audio', component: AudioShowcase, ...configs.audio });
   registerComposition({ id: 'easing', component: EasingShowcase, ...configs.easing });
   registerComposition({ id: 'video', component: VideoShowcase, ...configs.video });
 }

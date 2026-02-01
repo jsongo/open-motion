@@ -158,6 +158,7 @@ export const runRender = async (options: {
 }) => {
   const tmpDir = path.join(process.cwd(), '.open-motion-tmp');
   const inputProps = options.props ? JSON.parse(options.props) : {};
+  const startTime = Date.now();
 
   console.log(`Fetching compositions from ${options.url}...`);
   const compositions = await getCompositions(options.url);
@@ -218,7 +219,11 @@ export const runRender = async (options: {
   encodeBar.update(100);
   multibar.stop();
 
+  const endTime = Date.now();
+  const durationSec = ((endTime - startTime) / 1000).toFixed(1);
+
   console.log(`\nSuccess! Video rendered to ${options.out}`);
+  console.log(`Total time: ${durationSec}s`);
 };
 
 export const main = () => {
