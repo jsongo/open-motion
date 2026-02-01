@@ -47,12 +47,13 @@ export const encodeVideo = ({ framesDir, fps, outputFile, audioAssets = [], onPr
         const startFromSec = (asset.startFrom || 0) / fps;
         const volume = asset.volume ?? 1;
 
-        // Input index i+1 because input 0 is the video frames
+        // Use a more robust filter chain for each audio input
         return `[${i + 1}:a]atrim=start=${startFromSec},asetpts=PTS-STARTPTS,adelay=${delayMs}|${delayMs},volume=${volume}[a${i}]`;
       });
 
       const mixInput = audioAssets.map((_, i) => `[a${i}]`).join('');
-      filters.push(`${mixInput}amix=inputs=${audioAssets.length}:duration=first[a]`);
+      // Use dropout_transition=1000 to ensure audio doesn't cut off abruptly
+      filters.push(`${mixInput}amix=inputs=${audioAssets.length}:duration=longest:dropout_transition=1000[a]`);
 
       command.complexFilter(filters);
       command.outputOptions([
@@ -60,6 +61,8 @@ export const encodeVideo = ({ framesDir, fps, outputFile, audioAssets = [], onPr
         '-map 0:v',
         '-map [a]',
         '-c:a aac',
+        '-b:a 192k',
+        '-ac 2',
         '-shortest'
       ]);
     } else {

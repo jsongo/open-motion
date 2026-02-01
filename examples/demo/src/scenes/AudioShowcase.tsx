@@ -21,7 +21,11 @@ export const AudioShowcase = () => {
       height: '100%',
       fontFamily: 'sans-serif'
     }}>
-      <h2 style={{ marginBottom: 40 }}>Multi-track Audio Mixing</h2>
+      <h2 style={{ marginBottom: 40 }}>Multi-track Audio Mixing (v3-REAL-AUDIO)</h2>
+
+      <div style={{ position: 'absolute', top: 20, right: 20, background: 'red', padding: '10px', color: 'white', fontWeight: 'bold' }}>
+        VERSION: REAL_AUDIO_GEN_3
+      </div>
 
       <div style={{ display: 'flex', alignItems: 'flex-end', gap: 10, height: 150, marginBottom: 40 }}>
         {[bar1, bar2, bar3, bar2, bar1, bar3, bar2].map((h, i) => (
@@ -35,14 +39,14 @@ export const AudioShowcase = () => {
         <p style={{ color: progress(frame, 150, 240) ? '#38bdf8' : '#666' }}>Track 3: Narrative Overlay (From frame 150)</p>
       </div>
 
-      <Audio src="https://www.soundhelix.com/examples/mp3/SoundHelix-Song-1.mp3" volume={0.3} />
+      <Audio src="/test-audio.mp3" volume={0.3} />
 
       <Sequence from={60}>
-        <Audio src="https://www.soundhelix.com/examples/mp3/SoundHelix-Song-2.mp3" volume={0.5} />
+        <Audio src="/test-audio.mp3" startFrom={100} volume={0.5} />
       </Sequence>
 
       <Sequence from={150}>
-        <Audio src="https://www.soundhelix.com/examples/mp3/SoundHelix-Song-8.mp3" volume={0.7} />
+        <Audio src="/test-audio.mp3" startFrom={200} volume={0.7} />
       </Sequence>
     </div>
   );

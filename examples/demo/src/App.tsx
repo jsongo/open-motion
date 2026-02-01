@@ -23,7 +23,6 @@ const configs = {
   video: { width: 1280, height: 720, fps: 30, durationInFrames: 150 },
 };
 
-// Standard mapping for rendering
 const sceneMapping: Record<string, { component: React.ComponentType<any>, config: any }> = {
   'main': { component: DemoVideo, config: configs.main },
   'interpolation': { component: MovingBox, config: configs.interpolation },
@@ -33,7 +32,6 @@ const sceneMapping: Record<string, { component: React.ComponentType<any>, config
   'video': { component: VideoShowcase, config: configs.video },
 };
 
-// Immediate registration for CLI discovery
 if (typeof window !== 'undefined') {
   Object.entries(sceneMapping).forEach(([id, scene]) => {
     registerComposition({ id, component: scene.component, ...scene.config });
@@ -129,7 +127,6 @@ export const App = () => {
         </section>
       </div>
 
-      {/* Registration tags */}
       <div style={{ display: 'none' }}>
         <Composition id="main" component={DemoVideo} {...configs.main} />
       </div>

@@ -94,13 +94,15 @@ export const renderFrames = async ({ url, config, outputDir, compositionId, inpu
       await page.waitForLoadState('networkidle');
 
       // Additional small wait to ensure style/layout stability
-      await page.evaluate(() => new Promise(resolve => setTimeout(resolve, 50)));
+      await page.evaluate(() => new Promise(resolve => setTimeout(resolve, 200)));
 
       // Extract audio assets from each frame to catch late-entering audio
       const assets = await page.evaluate(() => (window as any).__OPEN_MOTION_AUDIO_ASSETS__ || []);
       workerAudioAssets.push(...assets);
 
       const screenshotPath = path.join(outputDir, `frame-${i.toString().padStart(5, '0')}.png`);
+      // Force a tiny bit of wait before each screenshot to ensure rendering
+      await new Promise(r => setTimeout(r, 100));
       await page.screenshot({ path: screenshotPath, type: 'png' });
 
       totalFramesRendered++;

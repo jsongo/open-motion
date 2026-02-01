@@ -206,13 +206,32 @@ export const runRender = async (options: {
 
   renderBar.update(config.durationInFrames);
 
+  // Resolve audio paths to absolute file paths if they are relative URLs
+  const resolvedAudioAssets = audioAssets.map(asset => {
+    if (asset.src.startsWith('/') && !asset.src.startsWith('//')) {
+      // Look for public folder relative to the URL if possible, but for now
+      // let's try common locations
+      const possiblePaths = [
+        path.join(process.cwd(), 'examples/demo/public', asset.src.substring(1)),
+        path.join(process.cwd(), 'public', asset.src.substring(1)),
+      ];
+
+      for (const p of possiblePaths) {
+        if (fs.existsSync(p)) {
+          return { ...asset, src: p };
+        }
+      }
+    }
+    return asset;
+  });
+
   const encodeBar = multibar.create(100, 0, { task: 'Encoding ' });
 
   await encodeVideo({
     framesDir: tmpDir,
     fps: config.fps,
     outputFile: options.out,
-    audioAssets,
+    audioAssets: resolvedAudioAssets,
     onProgress: (percent) => encodeBar.update(Math.round(percent))
   });
 
