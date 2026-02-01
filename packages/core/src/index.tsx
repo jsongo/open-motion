@@ -391,4 +391,66 @@ export const Video: React.FC<{
   );
 };
 
+/**
+ * OffthreadVideo Component
+ * In Player mode: behaves like a normal <Video />
+ * In Render mode: offloads decoding to the renderer to save memory and CPU
+ */
+export const OffthreadVideo: React.FC<{
+  src: string;
+  startFrom?: number;
+  endAt?: number;
+  playbackRate?: number;
+  style?: React.CSSProperties;
+}> = (props) => {
+  const isRendering = typeof (window as any).__OPEN_MOTION_FRAME__ === 'number';
+  const frame = useCurrentFrame();
+  const { fps } = useVideoConfig();
+
+  // In rendering mode, we register the asset so the renderer can provide the frame
+  if (isRendering) {
+    const startFrom = props.startFrom || 0;
+    const playbackRate = props.playbackRate || 1;
+    const targetTime = (frame * playbackRate + startFrom) / fps;
+
+    if (typeof window !== 'undefined') {
+      (window as any).__OPEN_MOTION_VIDEO_ASSETS__ = (window as any).__OPEN_MOTION_VIDEO_ASSETS__ || [];
+      // We use a unique ID for this instance based on its properties
+      const id = `offthread-${props.src}-${startFrom}-${playbackRate}`;
+
+      // Check if already registered for this frame
+      const exists = (window as any).__OPEN_MOTION_VIDEO_ASSETS__.find((a: any) => a.id === id);
+      if (!exists) {
+        (window as any).__OPEN_MOTION_VIDEO_ASSETS__.push({
+          id,
+          src: props.src,
+          time: targetTime,
+          frame,
+        });
+      }
+
+      // Render a placeholder image that the renderer will populate or we can use a data-uri
+      const frameDataUri = (window as any).__OPEN_MOTION_VIDEO_FRAMES__?.[id];
+
+      return (
+        <img
+          src={frameDataUri || ''}
+          style={{
+            display: 'block',
+            objectFit: 'cover',
+            width: '100%',
+            height: '100%',
+            backgroundColor: frameDataUri ? 'transparent' : '#333',
+            ...props.style,
+          }}
+          alt=""
+        />
+      );
+    }
+  }
+
+  // Fallback to normal Video for Player/Preview
+  return <Video {...props} />;
+};
+
 export * from './Player';

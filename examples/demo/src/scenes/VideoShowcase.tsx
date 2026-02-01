@@ -1,5 +1,5 @@
 import React from 'react';
-import { Video, useCurrentFrame, interpolate } from '@open-motion/core';
+import { OffthreadVideo, useCurrentFrame, interpolate } from '@open-motion/core';
 
 export const VideoShowcase = () => {
   const frame = useCurrentFrame();
@@ -22,9 +22,9 @@ export const VideoShowcase = () => {
     }}>
       <div style={{ marginBottom: 30, opacity: titleOpacity }}>
         <h2 style={{ margin: 0, fontSize: 32, background: 'linear-gradient(90deg, #3b82f6, #8b5cf6)', WebkitBackgroundClip: 'text', WebkitTextFillColor: 'transparent' }}>
-          Cinematic Video Control
+          Off-thread Cinematic Video
         </h2>
-        <p style={{ color: '#64748b' }}>Frame-accurate seeking, speed manipulation and clipping</p>
+        <p style={{ color: '#64748b' }}>Enhanced performance: decoding moved from browser to background process</p>
       </div>
 
       <div style={{ display: 'flex', gap: '30px', flexWrap: 'wrap', justifyContent: 'center', transform: `scale(${scale})` }}>
@@ -37,7 +37,7 @@ export const VideoShowcase = () => {
           <div key={i} style={{ width: '450px' }}>
             <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: 8 }}>
               <span style={{ fontSize: 12, fontWeight: 'bold', color: item.color }}>{item.label}</span>
-              <span style={{ fontSize: 10, color: '#444' }}>SRC: BIG_BUCK_BUNNY.MP4</span>
+              <span style={{ fontSize: 10, color: '#444' }}>TYPE: OFF-THREAD DECODING</span>
             </div>
             <div style={{
               width: '100%',
@@ -48,7 +48,7 @@ export const VideoShowcase = () => {
               border: `1px solid ${item.color}44`,
               boxShadow: `0 10px 30px ${item.color}22`
             }}>
-              <Video
+              <OffthreadVideo
                 src="https://commondatastorage.googleapis.com/gtv-videos-bucket/sample/BigBuckBunny.mp4"
                 startFrom={item.start}
                 playbackRate={item.rate}
@@ -64,7 +64,7 @@ export const VideoShowcase = () => {
         <div style={{ flex: 1, height: 2, backgroundColor: '#333' }}>
           <div style={{ width: `${(frame / 150) * 100}%`, height: '100%', backgroundColor: '#3b82f6' }} />
         </div>
-        <span style={{ fontSize: 12, color: '#666', font堅: 'monospace' }}>SEC: {(frame / 30).toFixed(2)}s</span>
+        <span style={{ fontSize: 12, color: '#666', fontFamily: 'monospace' }}>SEC: {(frame / 30).toFixed(2)}s</span>
       </div>
     </div>
   );

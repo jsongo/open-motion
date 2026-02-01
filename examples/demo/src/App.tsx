@@ -128,7 +128,9 @@ export const App = () => {
       </div>
 
       <div style={{ display: 'none' }}>
-        <Composition id="main" component={DemoVideo} {...configs.main} />
+        {Object.entries(sceneMapping).map(([id, scene]) => (
+          <Composition key={id} id={id} component={scene.component} {...scene.config} />
+        ))}
       </div>
     </div>
   );

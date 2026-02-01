@@ -2,6 +2,19 @@ import { chromium, Page } from 'playwright';
 import { getTimeHijackScript, VideoConfig } from '@open-motion/core';
 import fs from 'fs';
 import path from 'path';
+import { execSync } from 'child_process';
+
+// Helper to extract a single frame from a video using FFmpeg
+const extractFrame = (videoPath: string, time: number, outputPath: string) => {
+  try {
+    // -ss before -i is faster as it seeks before decoding
+    execSync(`ffmpeg -y -ss ${time} -i "${videoPath}" -frames:v 1 -q:v 2 "${outputPath}"`, { stdio: 'ignore' });
+    return true;
+  } catch (e) {
+    console.error(`Failed to extract frame from ${videoPath} at ${time}s`, e);
+    return false;
+  }
+};
 
 export interface RenderOptions {
   url: string;
@@ -49,6 +62,7 @@ export const renderFrames = async ({ url, config, outputDir, compositionId, inpu
     });
 
     const workerAudioAssets: any[] = [];
+    const videoCache = new Map<string, string>(); // Path to local resolved path
 
     for (let i = startFrame; i <= endFrame && i < config.durationInFrames; i++) {
       if (i === startFrame) {
@@ -57,6 +71,7 @@ export const renderFrames = async ({ url, config, outputDir, compositionId, inpu
           (window as any).__OPEN_MOTION_COMPOSITION_ID__ = compositionId;
           (window as any).__OPEN_MOTION_INPUT_PROPS__ = inputProps;
           (window as any).__OPEN_MOTION_READY__ = false;
+          (window as any).__OPEN_MOTION_VIDEO_FRAMES__ = {};
 
           // Execute hijack script
           const script = document.createElement('script');
@@ -77,6 +92,7 @@ export const renderFrames = async ({ url, config, outputDir, compositionId, inpu
         await page.evaluate(({ frame, fps, hijackScript }) => {
           (window as any).__OPEN_MOTION_READY__ = false;
           (window as any).__OPEN_MOTION_FRAME__ = frame;
+          (window as any).__OPEN_MOTION_VIDEO_ASSETS__ = []; // Reset for this frame
           eval(hijackScript);
           window.dispatchEvent(new CustomEvent('open-motion-frame-update', { detail: { frame } }));
         }, {
@@ -86,6 +102,7 @@ export const renderFrames = async ({ url, config, outputDir, compositionId, inpu
         });
       }
 
+      // Wait for content to be ready
       await page.waitForFunction(() => {
         const ready = (window as any).__OPEN_MOTION_READY__ === true;
         const delayCount = (window as any).__OPEN_MOTION_DELAY_RENDER_COUNT__ || 0;
@@ -93,16 +110,54 @@ export const renderFrames = async ({ url, config, outputDir, compositionId, inpu
       }, { timeout: 60000 });
       await page.waitForLoadState('networkidle');
 
-      // Additional small wait to ensure style/layout stability
-      await page.evaluate(() => new Promise(resolve => setTimeout(resolve, 200)));
+      // Check for OffthreadVideo assets
+      const videoAssets = await page.evaluate(() => (window as any).__OPEN_MOTION_VIDEO_ASSETS__ || []);
 
-      // Extract audio assets from each frame to catch late-entering audio
+      if (videoAssets.length > 0) {
+        const videoFrames: Record<string, string> = {};
+
+        for (const asset of videoAssets) {
+          // Resolve relative path to absolute
+          let localPath = asset.src;
+          if (asset.src.startsWith('/') && !asset.src.startsWith('//')) {
+            // Check common public folders
+            const possiblePaths = [
+              path.join(process.cwd(), 'examples/demo/public', asset.src.substring(1)),
+              path.join(process.cwd(), 'public', asset.src.substring(1)),
+            ];
+            for (const p of possiblePaths) {
+              if (fs.existsSync(p)) {
+                localPath = p;
+                break;
+              }
+            }
+          }
+
+          const tempFramePath = path.join(outputDir, `temp-${workerId}-${asset.id}.jpg`);
+          if (extractFrame(localPath, asset.time, tempFramePath)) {
+            const base64 = fs.readFileSync(tempFramePath, { encoding: 'base64' });
+            videoFrames[asset.id] = `data:image/jpeg;base64,${base64}`;
+            fs.unlinkSync(tempFramePath); // Cleanup temp file
+          }
+        }
+
+        // Inject frames back into the page
+        await page.evaluate((frames) => {
+          (window as any).__OPEN_MOTION_VIDEO_FRAMES__ = frames;
+        }, videoFrames);
+
+        // Brief wait for React to re-render the <img> tags with new src
+        await page.evaluate(() => new Promise(resolve => setTimeout(resolve, 50)));
+      }
+
+      // Additional small wait to ensure style/layout stability
+      await page.evaluate(() => new Promise(resolve => setTimeout(resolve, 150)));
+
+      // Extract audio assets
       const assets = await page.evaluate(() => (window as any).__OPEN_MOTION_AUDIO_ASSETS__ || []);
       workerAudioAssets.push(...assets);
 
       const screenshotPath = path.join(outputDir, `frame-${i.toString().padStart(5, '0')}.png`);
-      // Force a tiny bit of wait before each screenshot to ensure rendering
-      await new Promise(r => setTimeout(r, 100));
       await page.screenshot({ path: screenshotPath, type: 'png' });
 
       totalFramesRendered++;
