@@ -48,7 +48,6 @@ export const CompositionProvider: React.FC<{
         <AbsoluteFrameContext.Provider value={currentFrame}>
           <FrameContext.Provider value={currentFrame}>
             <div
-              key={currentFrame}
               style={{
                 width: config.width,
                 height: config.height,
