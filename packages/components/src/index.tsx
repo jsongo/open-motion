@@ -1,5 +1,27 @@
 import React from 'react';
-import { useCurrentFrame, useVideoConfig, interpolate, spring, Easing } from '@open-motion/core';
+/**
+ * Series Component: automatically calculates 'from' for its children
+ * based on their duration.
+ */
+export const Series: React.FC<{
+  children: React.ReactElement<{ durationInFrames: number }>[];
+}> = ({ children }) => {
+  let currentFrom = 0;
+
+  return (
+    <>
+      {React.Children.map(children, (child) => {
+        const from = currentFrom;
+        currentFrom += child.props.durationInFrames || 0;
+        return (
+          <Sequence from={from} durationInFrames={child.props.durationInFrames}>
+            {child}
+          </Sequence>
+        );
+      })}
+    </>
+  );
+};
 
 /**
  * A button that pulsates slowly to attract attention.
@@ -116,6 +138,38 @@ export const ProgressBar: React.FC<{
         borderRadius: height / 2,
         transition: 'width 0.1s ease-out'
       }} />
+    </div>
+  );
+};
+
+/**
+ * A simple wave visualizer that mimics audio frequencies.
+ */
+export const WaveVisualizer: React.FC<{
+  bars?: number;
+  color?: string;
+  height?: number;
+  style?: React.CSSProperties;
+}> = ({ bars = 20, color = '#3b82f6', height = 100, style }) => {
+  const frame = useCurrentFrame();
+
+  return (
+    <div style={{ display: 'flex', alignItems: 'flex-end', gap: '4px', height, ...style }}>
+      {Array.from({ length: bars }).map((_, i) => {
+        const h = interpolate(
+          Math.sin((frame / 5) + i * 0.5),
+          [-1, 1],
+          [10, height]
+        );
+        return (
+          <div key={i} style={{
+            width: '8px',
+            height: h,
+            backgroundColor: color,
+            borderRadius: '4px'
+          }} />
+        );
+      })}
     </div>
   );
 };
