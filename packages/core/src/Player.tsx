@@ -104,7 +104,7 @@ export const Player: React.FC<PlayerProps> = ({
           background: '#fff'
         }}
       >
-        <CompositionProvider config={config} frame={Math.floor(frame)} inputProps={inputProps}>
+        <CompositionProvider config={config} frame={frame} inputProps={inputProps}>
           <Component />
         </CompositionProvider>
       </div>
