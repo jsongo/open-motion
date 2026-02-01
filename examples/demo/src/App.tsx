@@ -23,41 +23,38 @@ const configs = {
   video: { width: 1280, height: 720, fps: 30, durationInFrames: 150 },
 };
 
-// Immediate registration at module level for reliable CLI discovery
+// Standard mapping for rendering
+const sceneMapping: Record<string, { component: React.ComponentType<any>, config: any }> = {
+  'main': { component: DemoVideo, config: configs.main },
+  'interpolation': { component: MovingBox, config: configs.interpolation },
+  'dashboard': { component: Dashboard, config: configs.dashboard },
+  'audio': { component: AudioShowcase, config: configs.audio },
+  'easing': { component: EasingShowcase, config: configs.easing },
+  'video': { component: VideoShowcase, config: configs.video },
+};
+
+// Immediate registration for CLI discovery
 if (typeof window !== 'undefined') {
-  registerComposition({ id: 'audio', component: AudioShowcase, ...configs.audio });
-  registerComposition({ id: 'main', component: DemoVideo, ...configs.main });
-  registerComposition({ id: 'interpolation', component: MovingBox, ...configs.interpolation });
-  registerComposition({ id: 'dashboard', component: Dashboard, ...configs.dashboard });
-  registerComposition({ id: 'easing', component: EasingShowcase, ...configs.easing });
-  registerComposition({ id: 'video', component: VideoShowcase, ...configs.video });
+  Object.entries(sceneMapping).forEach(([id, scene]) => {
+    registerComposition({ id, component: scene.component, ...scene.config });
+  });
 }
 
 export const App = () => {
   const isRendering = typeof (window as any).__OPEN_MOTION_FRAME__ === 'number';
 
   if (isRendering) {
-    const compositionId = (window as any).__OPEN_MOTION_COMPOSITION_ID__;
+    const compositionId = (window as any).__OPEN_MOTION_COMPOSITION_ID__ || 'main';
     const inputProps = (window as any).__OPEN_MOTION_INPUT_PROPS__ || {};
-
-    let Component = DemoVideo;
-    let config = configs.main;
-
-    switch (compositionId) {
-      case 'interpolation': Component = MovingBox; config = configs.interpolation; break;
-      case 'dashboard': Component = Dashboard; config = configs.dashboard; break;
-      case 'audio': Component = AudioShowcase; config = configs.audio; break;
-      case 'easing': Component = EasingShowcase; config = configs.easing; break;
-      case 'video': Component = VideoShowcase; config = configs.video; break;
-    }
+    const scene = sceneMapping[compositionId] || sceneMapping.main;
 
     return (
       <CompositionProvider
-        config={config}
+        config={scene.config}
         frame={(window as any).__OPEN_MOTION_FRAME__}
         inputProps={inputProps}
       >
-        <Component />
+        <scene.component />
       </CompositionProvider>
     );
   }
@@ -132,14 +129,9 @@ export const App = () => {
         </section>
       </div>
 
-      {/* Registration for CLI Rendering */}
+      {/* Legacy tags for safety */}
       <div style={{ display: 'none' }}>
         <Composition id="main" component={DemoVideo} {...configs.main} />
-        <Composition id="interpolation" component={MovingBox} {...configs.interpolation} />
-        <Composition id="dashboard" component={Dashboard} {...configs.dashboard} />
-        <Composition id="audio" component={AudioShowcase} {...configs.audio} />
-        <Composition id="easing" component={EasingShowcase} {...configs.easing} />
-        <Composition id="video" component={VideoShowcase} {...configs.video} />
       </div>
     </div>
   );
