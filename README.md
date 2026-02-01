@@ -21,7 +21,7 @@
 OpenMotion is a high-performance, open-source alternative to Remotion. It allows you to create frame-perfect videos using familiar React components, hooks, and your favorite CSS libraries. Whether you're building automated marketing videos, personalized content, or dynamic data visualizations, OpenMotion provides the core engine to turn your React code into high-quality MP4s.
 
 <p align="center">
-  <video src="assets/demo-main.mp4" width="100%" controls autoplay loop muted></video>
+  <img src="assets/demo-main.gif" width="100%" alt="OpenMotion Demo" />
 </p>
 
 ## ✨ Features
@@ -129,9 +129,9 @@ Explore our examples to see OpenMotion in action:
 
 | Multi-track Audio | Easing Curves |
 | :--- | :--- |
-| <video src="assets/demo-audio.mp4" width="400" controls></video> | <video src="assets/demo-easing.mp4" width="400" controls></video> |
+| <img src="assets/demo-audio.gif" width="400" alt="Audio Showcase" /> | <img src="assets/demo-easing.gif" width="400" alt="Easing Showcase" /> |
 | **Data Dashboard** | **Video Components** |
-| <video src="assets/demo-main.mp4" width="400" controls></video> | <video src="assets/demo-video.mp4" width="400" controls></video> |
+| <img src="assets/demo-main.gif" width="400" alt="Data Dashboard" /> | <img src="assets/demo-video.gif" width="400" alt="Video Components" /> |
 
 
 ## 🛠 Installation
