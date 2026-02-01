@@ -99,7 +99,7 @@ export const App = () => {
         </section>
 
         <section style={sectionStyle}>
-          <h3>✨ Professional Easing</h3>
+          <h3>✨ Zootopia Easing Race</h3>
           <Player
             component={EasingShowcase}
             config={configs.easing}
@@ -109,7 +109,7 @@ export const App = () => {
         </section>
 
         <section style={sectionStyle}>
-          <h3>📹 Advanced Video Features</h3>
+          <h3>📹 Cinematic Video Control</h3>
           <Player
             component={VideoShowcase}
             config={configs.video}
@@ -129,7 +129,7 @@ export const App = () => {
         </section>
       </div>
 
-      {/* Legacy tags for safety */}
+      {/* Registration tags */}
       <div style={{ display: 'none' }}>
         <Composition id="main" component={DemoVideo} {...configs.main} />
       </div>
