@@ -158,6 +158,8 @@ export const renderFrames = async ({ url, config, outputDir, compositionId, inpu
       workerAudioAssets.push(...assets);
 
       const screenshotPath = path.join(outputDir, `frame-${i.toString().padStart(5, '0')}.png`);
+      // Force a tiny bit of wait before each screenshot to ensure rendering
+      await new Promise(r => setTimeout(r, 100));
       await page.screenshot({ path: screenshotPath, type: 'png' });
 
       totalFramesRendered++;
