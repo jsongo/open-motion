@@ -8,7 +8,7 @@ import path from 'path';
  * @param outputPath Output path for the extracted frame
  * @returns boolean indicating success
  */
-export const extractFrame = (videoPath: string, time: number, outputPath: string): boolean => {
+export const extractFrame = async (videoPath: string, time: number, outputPath: string): Promise<boolean> => {
   try {
     const ffmpeg = require('fluent-ffmpeg');
     return new Promise((resolve) => {
@@ -123,7 +123,7 @@ export const measurePerformance = async (
  * @param outputPath Output path for the thumbnail
  * @returns boolean indicating success
  */
-export const createThumbnail = (videoPath: string, outputPath: string): boolean => {
+export const createThumbnail = async (videoPath: string, outputPath: string): Promise<boolean> => {
   try {
     const { execSync } = require('child_process');
 
@@ -134,7 +134,7 @@ export const createThumbnail = (videoPath: string, outputPath: string): boolean 
     const duration = parseFloat(durationOutput.trim());
     const thumbnailTime = duration / 2; // Middle of the video
 
-    return extractFrame(videoPath, thumbnailTime, outputPath);
+    return await extractFrame(videoPath, thumbnailTime, outputPath);
   } catch (error) {
     console.error('Failed to create thumbnail:', error);
     return false;
@@ -169,7 +169,7 @@ export const extractFramesAtInterval = async (
     const frames: string[] = [];
     for (let time = 0; time < duration; time += interval) {
       const outputPath = path.join(outputDir, `frame-${time.toFixed(2)}.png`);
-      if (extractFrame(videoPath, time, outputPath)) {
+      if (await extractFrame(videoPath, time, outputPath)) {
         frames.push(outputPath);
       }
     }
