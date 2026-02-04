@@ -1,5 +1,106 @@
-import React from 'react';
-import { useCurrentFrame, useVideoConfig, interpolate, spring, Easing, Sequence } from '@open-motion/core';
+import React, { useRef, useEffect, useMemo } from 'react';
+import { useCurrentFrame, useVideoConfig, interpolate, spring, Easing, Sequence, delayRender, continueRender } from '@open-motion/core';
+import * as THREE from 'three';
+
+/**
+ * ThreeCanvas Component: Integrates Three.js with OpenMotion's frame system.
+ */
+export const ThreeCanvas: React.FC<{
+  width: number;
+  height: number;
+  renderScene: (scene: THREE.Scene, camera: THREE.Camera, frame: number) => void;
+  init?: (scene: THREE.Scene, camera: THREE.Camera) => void;
+  style?: React.CSSProperties;
+}> = ({ width, height, renderScene, init, style }) => {
+  const containerRef = useRef<HTMLDivElement>(null);
+  const frame = useCurrentFrame();
+
+  const { scene, camera, renderer } = useMemo(() => {
+    const s = new THREE.Scene();
+    const c = new THREE.PerspectiveCamera(75, width / height, 0.1, 1000);
+    const r = new THREE.WebGLRenderer({ antialias: true, alpha: true });
+    r.setSize(width, height);
+    r.setPixelRatio(window.devicePixelRatio);
+    return { scene: s, camera: c, renderer: r };
+  }, [width, height]);
+
+  useEffect(() => {
+    if (containerRef.current) {
+      containerRef.current.appendChild(renderer.domElement);
+      if (init) init(scene, camera);
+    }
+    return () => {
+      if (containerRef.current) {
+        containerRef.current.removeChild(renderer.domElement);
+      }
+      renderer.dispose();
+    };
+  }, [renderer, scene, camera, init]);
+
+  useEffect(() => {
+    renderScene(scene, camera, frame);
+    renderer.render(scene, camera);
+  }, [frame, renderScene, scene, camera, renderer]);
+
+  return <div ref={containerRef} style={{ width, height, ...style }} />;
+};
+
+/**
+ * Lottie Component: Standardized Lottie animation component.
+ */
+export const Lottie: React.FC<{
+  url: string;
+  style?: React.CSSProperties;
+}> = ({ url, style }) => {
+  const containerRef = useRef<HTMLDivElement>(null);
+  const animationRef = useRef<any>(null);
+  const frame = useCurrentFrame();
+
+  useEffect(() => {
+    const handle = delayRender(`Loading Lottie: ${url}`);
+
+    const loadLottie = async () => {
+      if (!(window as any).lottie) {
+        await new Promise((resolve) => {
+          const script = document.createElement('script');
+          script.src = 'https://cdnjs.cloudflare.com/ajax/libs/lottie-web/5.12.2/lottie.min.js';
+          script.onload = resolve;
+          document.head.appendChild(script);
+        });
+      }
+
+      if (containerRef.current) {
+        animationRef.current = (window as any).lottie.loadAnimation({
+          container: containerRef.current,
+          renderer: 'svg',
+          loop: false,
+          autoplay: false,
+          path: url,
+        });
+
+        animationRef.current.addEventListener('DOMLoaded', () => {
+          continueRender(handle);
+        });
+      }
+    };
+
+    loadLottie();
+
+    return () => {
+      if (animationRef.current) {
+        animationRef.current.destroy();
+      }
+    };
+  }, [url]);
+
+  useEffect(() => {
+    if (animationRef.current) {
+      animationRef.current.goToAndStop(frame, true);
+    }
+  }, [frame]);
+
+  return <div ref={containerRef} style={{ width: '100%', height: '100%', ...style }} />;
+};
 
 /**
  * Series Component: automatically calculates 'from' for its children

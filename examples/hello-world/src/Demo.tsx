@@ -9,7 +9,8 @@ import {
   interpolate,
   Composition
 } from '@open-motion/core';
-import { Transition } from '@open-motion/components';
+import { Transition, ThreeCanvas, Lottie } from '@open-motion/components';
+import * as THREE from 'three';
 
 const DemoVideo = () => {
   const frame = useCurrentFrame();
@@ -33,63 +34,54 @@ const DemoVideo = () => {
       overflow: 'hidden'
     }}>
       <Transition type="slide" direction="top" style={{ marginBottom: 40 }}>
-        <h1 style={{ fontSize: 60 }}>Animation & Transitions</h1>
+        <h1 style={{ fontSize: 60 }}>Integrations & 3D</h1>
       </Transition>
 
-      <div style={{ display: 'flex', gap: 40 }}>
+      <div style={{ display: 'flex', gap: 40, alignItems: 'center' }}>
         <div style={{ textAlign: 'center' }}>
-          <h3>Loop Component</h3>
-          <div style={{
-            width: 200,
-            height: 200,
-            backgroundColor: '#3b82f6',
-            borderRadius: 20,
-            display: 'flex',
-            justifyContent: 'center',
-            alignItems: 'center'
-          }}>
-            <Loop durationInFrames={30}>
-              <LoopIndicator />
-            </Loop>
-          </div>
+          <h3>Three.js (3D Cube)</h3>
+          <ThreeCanvas
+            width={300}
+            height={300}
+            init={(scene, camera) => {
+              const geometry = new THREE.BoxGeometry(1, 1, 1);
+              const material = new THREE.MeshStandardMaterial({ color: 0x00aaff });
+              const cube = new THREE.Mesh(geometry, material);
+              cube.name = 'cube';
+              scene.add(cube);
+
+              const light = new THREE.DirectionalLight(0xffffff, 1);
+              light.position.set(2, 2, 5);
+              scene.add(light);
+              scene.add(new THREE.AmbientLight(0xffffff, 0.5));
+
+              camera.position.z = 3;
+            }}
+            renderScene={(scene, _camera, frame) => {
+              const cube = scene.getObjectByName('cube');
+              if (cube) {
+                cube.rotation.x = frame * 0.05;
+                cube.rotation.y = frame * 0.05;
+              }
+            }}
+            style={{ borderRadius: 20, backgroundColor: '#1e293b' }}
+          />
         </div>
 
         <div style={{ textAlign: 'center' }}>
-          <h3>Easing (Expo)</h3>
-          <div style={{
-            width: 200,
-            height: 200,
-            backgroundColor: '#1e293b',
-            borderRadius: 20,
-            position: 'relative'
-          }}>
-             <div style={{
-               position: 'absolute',
-               left: 20 + easeProgress * 140,
-               top: 90,
-               width: 20,
-               height: 20,
-               backgroundColor: '#10b981',
-               borderRadius: '50%'
-             }} />
+          <h3>Lottie Animation</h3>
+          <div style={{ width: 300, height: 300, backgroundColor: '#1e293b', borderRadius: 20 }}>
+            <Lottie url="https://assets10.lottiefiles.com/packages/lf20_m6cuL6.json" />
           </div>
         </div>
+      </div>
 
-        <div style={{ textAlign: 'center' }}>
-          <h3>Wipe Transition</h3>
-          <Transition type="wipe" direction="right" style={{
-            width: 200,
-            height: 200,
-            backgroundColor: '#f59e0b',
-            borderRadius: 20,
-            display: 'flex',
-            justifyContent: 'center',
-            alignItems: 'center',
-            fontSize: 40
-          }}>
-            ✨
-          </Transition>
-        </div>
+      <div style={{ marginTop: 40, display: 'flex', gap: 20 }}>
+        <Loop durationInFrames={40}>
+          <div style={{ padding: '10px 20px', backgroundColor: '#3b82f6', borderRadius: 10 }}>
+            Looping UI
+          </div>
+        </Loop>
       </div>
     </div>
   );

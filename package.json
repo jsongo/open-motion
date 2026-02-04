@@ -20,5 +20,9 @@
     "@types/react-dom": "^18.3.7",
     "turbo": "^2.8.0",
     "typescript": "^5.9.3"
+  },
+  "dependencies": {
+    "@types/three": "^0.182.0",
+    "three": "^0.182.0"
   }
 }
