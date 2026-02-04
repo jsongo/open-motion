@@ -166,7 +166,7 @@ export const runRender = async (options: {
   if (options.compositionId) {
     // If ID is provided, we can skip the heavy discovery if we want,
     // but for now let's just make it non-fatal if discovery fails but ID is present
-    const compositions = await getCompositions(options.url).catch(() => []);
+    const compositions = await getCompositions(options.url, { inputProps }).catch(() => []);
     selectedComp = compositions.find((c: any) => c.id === options.compositionId);
 
     if (!selectedComp) {
@@ -180,7 +180,7 @@ export const runRender = async (options: {
       };
     }
   } else {
-    const compositions = await getCompositions(options.url);
+    const compositions = await getCompositions(options.url, { inputProps });
     if (compositions.length === 0) {
       console.error('No compositions found in the provided URL.');
       process.exit(1);

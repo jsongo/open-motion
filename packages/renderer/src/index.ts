@@ -26,7 +26,13 @@ export interface RenderOptions {
   onProgress?: (frame: number) => void;
 }
 
-export const getCompositions = async (url: string) => {
+export interface GetCompositionsOptions {
+  inputProps?: any;
+  chromiumOptions?: any;
+}
+
+export const getCompositions = async (url: string, options: GetCompositionsOptions = {}) => {
+  const { inputProps = {} } = options;
   const browser = await chromium.launch();
   const page = await browser.newPage();
   await page.goto(url);
@@ -41,8 +47,23 @@ export const getCompositions = async (url: string) => {
     return (window as any).__OPEN_MOTION_COMPOSITIONS__ || [];
   });
 
+  // Process calculateMetadata if available
+  const processedCompositions = await page.evaluate(async ([compositions, inputProps]) => {
+    for (const comp of compositions) {
+      if (comp.calculateMetadata) {
+        try {
+          const metadata = await eval(`(${comp.calculateMetadata})`)(inputProps);
+          Object.assign(comp, metadata);
+        } catch (error) {
+          console.warn(`Failed to calculate metadata for composition ${comp.id}:`, error);
+        }
+      }
+    }
+    return compositions;
+  }, [compositions, inputProps] as const);
+
   await browser.close();
-  return compositions;
+  return processedCompositions;
 };
 
 export const renderFrames = async ({ url, config, outputDir, compositionId, inputProps = {}, concurrency = 1, onProgress }: RenderOptions) => {

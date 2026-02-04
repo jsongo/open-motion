@@ -38,6 +38,30 @@ OpenMotion is a high-performance, open-source alternative to Remotion. It allows
 - 💬 **Caption System**: Automated subtitle rendering with SRT support and TikTok-style animations.
 - 📊 **Media Analysis**: Dynamic metadata extraction for video/audio (duration, dimensions).
 - 📹 **Offthread Video**: High-performance video decoding moved to background processes.
+- 📊 **Dynamic Metadata**: Calculate video dimensions, duration, and other properties dynamically based on input props.
+
+### Dynamic Metadata
+
+Calculate video properties dynamically:
+
+```tsx
+<Composition
+  id="dynamic-video"
+  component={VideoComponent}
+  width={1280}
+  height={720}
+  fps={30}
+  durationInFrames={300}
+  calculateMetadata={async (props) => {
+    const meta = await getVideoMetadata(props.src);
+    return {
+      width: meta.width,
+      height: meta.height,
+      durationInFrames: Math.ceil(meta.durationInSeconds * 30)
+    };
+  }}
+/>
+```
 
 ## 📦 Packages
 

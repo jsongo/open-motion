@@ -6,5 +6,5 @@ dist
 .DS_Store
 .turbo
 .parcel-cache
-progress.md.worktrees/
+.worktrees/
 progress.md.worktrees/

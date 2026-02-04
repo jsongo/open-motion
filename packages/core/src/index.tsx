@@ -98,6 +98,7 @@ export const getInputProps = <T extends any>(): T => {
 export interface CompositionProps extends VideoConfig {
   id: string;
   component: React.ComponentType<any>;
+  calculateMetadata?: (props: any) => Promise<Partial<VideoConfig>> | Partial<VideoConfig>;
 }
 
 const compositions: Map<string, CompositionProps> = new Map();
