@@ -34,6 +34,30 @@ OpenMotion is a high-performance, open-source alternative to Remotion. It allows
 - 🎵 **Multi-track Audio Mixing**: Support for multiple `<Audio />` with independent volume.
 - 📈 **Animation Components**: Built-in library for Typewriter, Breathing Buttons, and Progress Bars.
 - 📹 **Offthread Video**: High-performance video decoding moved to background processes.
+- 📊 **Dynamic Metadata**: Calculate video dimensions, duration, and other properties dynamically based on input props.
+
+### Dynamic Metadata
+
+Calculate video properties dynamically:
+
+```tsx
+<Composition
+  id="dynamic-video"
+  component={VideoComponent}
+  width={1280}
+  height={720}
+  fps={30}
+  durationInFrames={300}
+  calculateMetadata={async (props) => {
+    const meta = await getVideoMetadata(props.src);
+    return {
+      width: meta.width,
+      height: meta.height,
+      durationInFrames: Math.ceil(meta.durationInSeconds * 30)
+    };
+  }}
+/>
+```
 
 ## 📦 Packages
 
