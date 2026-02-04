@@ -1,7 +1,7 @@
 import React from 'react';
 import ReactDOM from 'react-dom/client';
 import { CompositionProvider } from '@open-motion/core';
-import { BrandShowcase } from '../scenes/BrandShowcase';
+import { BrandShowcase } from '../scenes/layout/BrandShowcase';
 
 const config = { width: 1280, height: 720, fps: 30, durationInFrames: 450 };
 
