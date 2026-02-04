@@ -2,9 +2,9 @@ import React from 'react';
 import { Series } from '@open-motion/components';
 import { Sequence } from '@open-motion/core';
 
-import { BrandShowcase } from './BrandShowcase';
-import { Dashboard } from './Dashboard';
-import { EasingShowcase } from './EasingShowcase';
+import { BrandShowcase } from '../layout/BrandShowcase';
+import { Dashboard } from '../layout/Dashboard';
+import { EasingShowcase } from '../animation/EasingShowcase';
 
 export const ShowcaseVideo = () => {
   return (
