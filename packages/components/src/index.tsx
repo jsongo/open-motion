@@ -146,6 +146,63 @@ export const ProgressBar: React.FC<{
 };
 
 /**
+ * Transition Component: handles basic enter/exit animations.
+ */
+export const Transition: React.FC<{
+  type: 'fade' | 'slide' | 'wipe';
+  durationInFrames?: number;
+  direction?: 'left' | 'right' | 'top' | 'bottom';
+  children: React.ReactNode;
+  style?: React.CSSProperties;
+}> = ({ type, durationInFrames = 15, direction = 'left', children, style }) => {
+  const frame = useCurrentFrame();
+  const { fps } = useVideoConfig();
+
+  const progress = spring({
+    frame,
+    fps,
+    config: { stiffness: 100, damping: 15 }
+  });
+
+  let transitionStyle: React.CSSProperties = {};
+
+  if (type === 'fade') {
+    transitionStyle = {
+      opacity: interpolate(progress, [0, 1], [0, 1]),
+    };
+  } else if (type === 'slide') {
+    const distance = 100;
+    const offset = interpolate(progress, [0, 1], [distance, 0]);
+    let transform = '';
+    if (direction === 'left') transform = `translateX(-${offset}px)`;
+    if (direction === 'right') transform = `translateX(${offset}px)`;
+    if (direction === 'top') transform = `translateY(-${offset}px)`;
+    if (direction === 'bottom') transform = `translateY(${offset}px)`;
+
+    transitionStyle = {
+      opacity: interpolate(progress, [0, 1], [0, 1]),
+      transform,
+    };
+  } else if (type === 'wipe') {
+    let clipPath = '';
+    if (direction === 'left') clipPath = `inset(0 ${100 - progress * 100}% 0 0)`;
+    if (direction === 'right') clipPath = `inset(0 0 0 ${100 - progress * 100}%)`;
+    if (direction === 'top') clipPath = `inset(0 0 ${100 - progress * 100}% 0)`;
+    if (direction === 'bottom') clipPath = `inset(${100 - progress * 100}% 0 0 0)`;
+
+    transitionStyle = {
+      clipPath,
+    };
+  }
+
+  return (
+    <div style={{ ...transitionStyle, ...style }}>
+      {children}
+    </div>
+  );
+};
+
+/**
  * A simple wave visualizer that mimics audio frequencies.
  */
 export const WaveVisualizer: React.FC<{
