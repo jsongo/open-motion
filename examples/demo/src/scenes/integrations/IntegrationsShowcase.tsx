@@ -27,7 +27,7 @@ Welcome to OpenMotion
 Create videos with React
 `;
 
-const DemoVideo = () => {
+export const IntegrationsShowcase = () => {
   const frame = useCurrentFrame();
   const { width, height } = useVideoConfig();
   const [videoMeta, setVideoMeta] = useState<{ duration: number } | null>(null);
@@ -39,7 +39,8 @@ const DemoVideo = () => {
       .then(meta => {
         setVideoMeta({ duration: meta.durationInSeconds });
         continueRender(handle);
-      });
+      })
+      .catch(() => continueRender(handle));
   }, []);
 
   return (
@@ -53,15 +54,16 @@ const DemoVideo = () => {
       flexDirection: 'column',
       justifyContent: 'center',
       alignItems: 'center',
-      overflow: 'hidden'
+      overflow: 'hidden',
+      position: 'relative'
     }}>
       <Transition type="slide" direction="top" style={{ marginBottom: 40 }}>
-        <h1 style={{ fontSize: 60 }}>Captions & Subtitles</h1>
+        <h1 style={{ fontSize: 60, margin: 0 }}>Integrations & Subtitles</h1>
       </Transition>
 
       <div style={{ display: 'flex', gap: 40, alignItems: 'center' }}>
         <div style={{ textAlign: 'center' }}>
-          <h3>TikTok Style Captions</h3>
+          <h3 style={{ marginBottom: 20 }}>TikTok Style Captions</h3>
           <div style={{
             width: 500,
             height: 300,
@@ -70,7 +72,8 @@ const DemoVideo = () => {
             display: 'flex',
             justifyContent: 'center',
             alignItems: 'center',
-            padding: 20
+            padding: 20,
+            position: 'relative'
           }}>
             <Captions
               subtitles={subtitles}
@@ -80,7 +83,7 @@ const DemoVideo = () => {
         </div>
 
         <div style={{ textAlign: 'center' }}>
-          <h3>3D Background</h3>
+          <h3 style={{ marginBottom: 20 }}>Three.js Background</h3>
           <ThreeCanvas
             width={300}
             height={300}
@@ -102,8 +105,15 @@ const DemoVideo = () => {
         </div>
       </div>
 
-      <div style={{ marginTop: 40 }}>
-        <p>Current Video Meta: {videoMeta ? `${videoMeta.duration.toFixed(1)}s` : '...'}</p>
+      <div style={{ marginTop: 40, display: 'flex', gap: 20, alignItems: 'center' }}>
+        <Loop durationInFrames={40}>
+          <div style={{ padding: '10px 20px', backgroundColor: '#3b82f6', borderRadius: 10, fontWeight: 'bold' }}>
+            Looping UI Component
+          </div>
+        </Loop>
+        <p style={{ margin: 0, color: '#888' }}>
+          Video Meta: {videoMeta ? `${videoMeta.duration.toFixed(1)}s` : 'loading...'}
+        </p>
       </div>
     </div>
   );

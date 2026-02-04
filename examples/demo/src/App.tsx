@@ -1,7 +1,8 @@
 import { CompositionProvider, Composition } from '@open-motion/core';
-import { ShowcaseVideo } from './scenes/ShowcaseVideo';
-import { MediaShowcase } from './scenes/MediaShowcase';
-import { CenteringShowcase } from './scenes/CenteringShowcase';
+import { ShowcaseVideo } from './scenes/media/ShowcaseVideo';
+import { MediaShowcase } from './scenes/media/MediaShowcase';
+import { CenteringShowcase } from './scenes/layout/CenteringShowcase';
+import { IntegrationsShowcase } from './scenes/integrations/IntegrationsShowcase';
 
 export const App = () => {
   const isRendering = typeof (window as any).__OPEN_MOTION_FRAME__ === 'number';
@@ -11,6 +12,7 @@ export const App = () => {
   const featureConfig = { width: 1280, height: 720, fps: 30, durationInFrames: 360 };
   const mediaConfig = { width: 1280, height: 720, fps: 30, durationInFrames: 240 };
   const centeringConfig = { width: 1280, height: 720, fps: 30, durationInFrames: 60 };
+  const integrationsConfig = { width: 1280, height: 720, fps: 30, durationInFrames: 120 };
 
   if (isRendering) {
     let Component = ShowcaseVideo;
@@ -22,6 +24,9 @@ export const App = () => {
     } else if (compositionId === 'centering-test') {
       Component = CenteringShowcase;
       activeConfig = centeringConfig;
+    } else if (compositionId === 'integrations-showcase') {
+      Component = IntegrationsShowcase;
+      activeConfig = integrationsConfig;
     }
 
     return (
@@ -39,6 +44,7 @@ export const App = () => {
           <Composition id="feature-showcase" component={ShowcaseVideo} {...featureConfig} />
           <Composition id="media-showcase" component={MediaShowcase} {...mediaConfig} />
           <Composition id="centering-test" component={CenteringShowcase} {...centeringConfig} />
+          <Composition id="integrations-showcase" component={IntegrationsShowcase} {...integrationsConfig} />
         </div>
       </CompositionProvider>
     </div>
