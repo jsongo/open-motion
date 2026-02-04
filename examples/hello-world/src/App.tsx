@@ -42,7 +42,9 @@ const Lottie: React.FC<{ url: string }> = ({ url }) => {
         });
       }
     };
-    document.head.appendChild(script);
+    if (document.head) {
+      document.head.appendChild(script);
+    }
 
     return () => {
       if (animationRef.current) {
@@ -78,7 +80,6 @@ const HelloWorldVideo = () => {
 
   return (
     <div style={{
-      flex: 1,
       backgroundColor: 'white',
       width,
       height,

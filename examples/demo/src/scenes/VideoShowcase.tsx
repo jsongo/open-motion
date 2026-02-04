@@ -9,7 +9,6 @@ export const VideoShowcase = () => {
 
   return (
     <div style={{
-      flex: 1,
       backgroundColor: '#0a0a0a',
       display: 'flex',
       flexDirection: 'column',
@@ -46,15 +45,26 @@ export const VideoShowcase = () => {
               overflow: 'hidden',
               backgroundColor: '#000',
               border: `1px solid ${item.color}44`,
-              boxShadow: `0 10px 30px ${item.color}22`
+              boxShadow: `0 10px 30px ${item.color}22`,
+              display: 'flex',
+              justifyContent: 'center',
+              alignItems: 'center',
+              position: 'relative'
             }}>
-              <OffthreadVideo
-                src="https://commondatastorage.googleapis.com/gtv-videos-bucket/sample/BigBuckBunny.mp4"
-                startFrom={item.start}
-                playbackRate={item.rate}
-                endAt={item.end}
-                style={{ width: '100%', height: '100%' }}
-              />
+              {/* Animated placeholder for Off-thread decoding */}
+              <div style={{
+                position: 'absolute',
+                width: '100%',
+                height: '100%',
+                background: `linear-gradient(${frame * 5}deg, ${item.color}22, #000)`,
+              }} />
+              <div style={{
+                width: 40 + Math.sin(frame / 10) * 20,
+                height: 40 + Math.sin(frame / 10) * 20,
+                borderRadius: '50%',
+                backgroundColor: item.color,
+                boxShadow: `0 0 20px ${item.color}`
+              }} />
             </div>
           </div>
         ))}

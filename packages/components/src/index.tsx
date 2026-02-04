@@ -1,5 +1,30 @@
 import React from 'react';
-import { useCurrentFrame, useVideoConfig, interpolate, spring, Easing } from '@open-motion/core';
+import { useCurrentFrame, useVideoConfig, interpolate, spring, Easing, Sequence } from '@open-motion/core';
+
+/**
+ * Series Component: automatically calculates 'from' for its children
+ * based on their duration.
+ */
+export const Series: React.FC<{
+  children: React.ReactElement<{ durationInFrames: number }>[];
+}> = ({ children }) => {
+  let currentFrom = 0;
+
+  return (
+    <>
+    {React.Children.map(children, (child) => {
+      const from = currentFrom;
+      const { durationInFrames } = child.props;
+      currentFrom += durationInFrames || 0;
+      return (
+        <Sequence from={from} durationInFrames={durationInFrames}>
+          {child.props.children}
+        </Sequence>
+      );
+    })}
+    </>
+  );
+};
 
 /**
  * A button that pulsates slowly to attract attention.
@@ -70,6 +95,84 @@ export const SlideInItem: React.FC<{
       ...style
     }}>
       {children}
+    </div>
+  );
+};
+
+/**
+ * A typewriter effect for text.
+ */
+export const Typewriter: React.FC<{
+  text: string;
+  speed?: number; // frames per character
+  delay?: number;
+  style?: React.CSSProperties;
+}> = ({ text, speed = 2, delay = 0, style }) => {
+  const frame = useCurrentFrame();
+  const charsShown = Math.max(0, Math.floor((frame - delay) / speed));
+  const visibleText = text.slice(0, charsShown);
+
+  return <span style={style}>{visibleText}</span>;
+};
+
+/**
+ * A progress bar that can be used for dashboards or status indicators.
+ */
+export const ProgressBar: React.FC<{
+  progress: number; // 0 to 1
+  color?: string;
+  height?: number;
+  backgroundColor?: string;
+  style?: React.CSSProperties;
+}> = ({ progress, color = '#3b82f6', height = 10, backgroundColor = '#e2e8f0', style }) => {
+  return (
+    <div style={{
+      width: '100%',
+      height,
+      backgroundColor,
+      borderRadius: height / 2,
+      overflow: 'hidden',
+      ...style
+    }}>
+      <div style={{
+        width: `${progress * 100}%`,
+        height: '100%',
+        backgroundColor: color,
+        borderRadius: height / 2,
+        transition: 'width 0.1s ease-out'
+      }} />
+    </div>
+  );
+};
+
+/**
+ * A simple wave visualizer that mimics audio frequencies.
+ */
+export const WaveVisualizer: React.FC<{
+  bars?: number;
+  color?: string;
+  height?: number;
+  style?: React.CSSProperties;
+}> = ({ bars = 20, color = '#3b82f6', height = 100, style }) => {
+  const frame = useCurrentFrame();
+
+  return (
+    <div style={{ display: 'flex', alignItems: 'flex-end', gap: '4px', height, ...style }}>
+      {Array.from({ length: bars }).map((_, i) => {
+        const h = interpolate(
+          Math.sin((frame / 5) + i * 0.5),
+          [-1, 1],
+          [10, height]
+        );
+        return (
+          <div key={i} style={{
+            width: '8px',
+            height: h,
+            backgroundColor: color,
+            borderRadius: '4px'
+          }} />
+        );
+      })}
     </div>
   );
 };

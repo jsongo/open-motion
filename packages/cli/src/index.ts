@@ -161,20 +161,31 @@ export const runRender = async (options: {
   const startTime = Date.now();
 
   console.log(`Fetching compositions from ${options.url}...`);
-  const compositions = await getCompositions(options.url);
+  let selectedComp: any = null;
 
-  if (compositions.length === 0) {
-    console.error('No compositions found in the provided URL.');
-    process.exit(1);
-  }
-
-  let selectedComp = compositions[0];
   if (options.compositionId) {
+    // If ID is provided, we can skip the heavy discovery if we want,
+    // but for now let's just make it non-fatal if discovery fails but ID is present
+    const compositions = await getCompositions(options.url).catch(() => []);
     selectedComp = compositions.find((c: any) => c.id === options.compositionId);
+
     if (!selectedComp) {
-      console.error(`Composition "${options.compositionId}" not found. Available: ${compositions.map((c: any) => c.id).join(', ')}`);
+      console.warn(`Composition "${options.compositionId}" not found via discovery, using default config.`);
+      selectedComp = {
+        id: options.compositionId,
+        width: options.width || 1280,
+        height: options.height || 720,
+        fps: options.fps || 30,
+        durationInFrames: options.duration || 100
+      };
+    }
+  } else {
+    const compositions = await getCompositions(options.url);
+    if (compositions.length === 0) {
+      console.error('No compositions found in the provided URL.');
       process.exit(1);
     }
+    selectedComp = compositions[0];
   }
 
   const config = {
@@ -245,13 +256,16 @@ export const runRender = async (options: {
   console.log(`Total time: ${durationSec}s`);
 };
 
+// Read package.json version
+const pkg = JSON.parse(fs.readFileSync(path.join(__dirname, '../package.json'), 'utf8'));
+
 export const main = () => {
   const program = new Command();
 
   program
     .name('open-motion')
     .description('CLI for OpenMotion')
-    .version('0.0.1-alpha.0');
+    .version(pkg.version);
 
   program
     .command('init <name>')

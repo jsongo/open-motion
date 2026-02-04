@@ -1,57 +1,112 @@
 import React from 'react';
-import { useCurrentFrame, Sequence, Audio, interpolate } from '@open-motion/core';
+import { useCurrentFrame, useVideoConfig, interpolate, Audio, Easing } from '@open-motion/core';
 
 export const AudioShowcase = () => {
   const frame = useCurrentFrame();
+  const { fps } = useVideoConfig();
 
-  const bar1 = interpolate(frame % 10, [0, 5, 10], [20, 100, 20]);
-  const bar2 = interpolate((frame + 3) % 12, [0, 6, 12], [30, 80, 30]);
-  const bar3 = interpolate((frame + 6) % 8, [0, 4, 8], [40, 120, 40]);
+  // Simple progress helper
+  const isActive = (start: number, end: number) => frame >= start && frame < end;
 
   return (
     <div style={{
-      flex: 1,
-      backgroundColor: '#000',
-      color: 'white',
+      backgroundColor: '#0f172a',
       display: 'flex',
       flexDirection: 'column',
       justifyContent: 'center',
       alignItems: 'center',
+      color: 'white',
       width: '100%',
       height: '100%',
-      fontFamily: 'sans-serif'
+      fontFamily: 'system-ui, -apple-system, sans-serif',
+      position: 'relative',
+      overflow: 'hidden'
     }}>
-      <h2 style={{ marginBottom: 40 }}>Multi-track Audio Mixing (v3-REAL-AUDIO)</h2>
+      {/* Background decoration */}
+      <div style={{
+        position: 'absolute',
+        width: '120%',
+        height: '120%',
+        background: 'radial-gradient(circle at center, #1e293b 0%, #0f172a 70%)',
+        zIndex: 0
+      }} />
 
-      <div style={{ position: 'absolute', top: 20, right: 20, background: 'red', padding: '10px', color: 'white', fontWeight: 'bold' }}>
-        VERSION: REAL_AUDIO_GEN_3
+      {/* Audio assets registration */}
+      <Audio src="/test-audio.mp3" volume={0.5} />
+      {frame >= 60 && <Audio src="/test-audio.mp3" startFrom={100} startFrame={60} volume={0.8} />}
+
+      <div style={{ textAlign: 'center', marginBottom: 80, zIndex: 1 }}>
+        <h2 style={{
+          fontSize: 48,
+          fontWeight: 900,
+          margin: 0,
+          letterSpacing: '-0.02em',
+          background: 'linear-gradient(135deg, #60a5fa, #a855f7)',
+          WebkitBackgroundClip: 'text',
+          WebkitTextFillColor: 'transparent'
+        }}>
+          Multi-track Audio Mixing
+        </h2>
+        <p style={{ color: '#94a3b8', fontSize: 20, marginTop: 15, fontWeight: 400 }}>
+          Sample-accurate synchronization with independent volume control
+        </p>
       </div>
 
-      <div style={{ display: 'flex', alignItems: 'flex-end', gap: 10, height: 150, marginBottom: 40 }}>
-        {[bar1, bar2, bar3, bar2, bar1, bar3, bar2].map((h, i) => (
-          <div key={i} style={{ width: 30, height: h, backgroundColor: '#38bdf8', borderRadius: 5 }} />
-        ))}
+      <div style={{ display: 'flex', alignItems: 'flex-end', gap: 15, height: 160, zIndex: 1 }}>
+        {[...Array(12)].map((_, i) => {
+          // Dynamic height animation
+          const seed = (i * 137) % 100;
+          const barHeight = interpolate(
+            frame,
+            [0 + i * 2, 10 + i * 2, 25 + i * 2, 40 + i * 2],
+            [20 + seed / 5, 80 + seed / 4, 30 + seed / 5, 20 + seed / 5],
+            { easing: Easing.inOut, extrapolateLeft: 'clamp', extrapolateRight: 'clamp' }
+          );
+
+          return (
+            <div
+              key={i}
+              style={{
+                width: 28,
+                height: `${barHeight}%`,
+                background: 'linear-gradient(to top, #3b82f6, #60a5fa)',
+                borderRadius: '14px 14px 6px 6px',
+                boxShadow: '0 0 30px rgba(59, 130, 246, 0.3)',
+                opacity: 0.3 + (barHeight / 100) * 0.7
+              }}
+            />
+          );
+        })}
       </div>
 
-      <div style={{ textAlign: 'center' }}>
-        <p style={{ color: progress(frame, 0, 300) ? '#38bdf8' : '#666' }}>Track 1: Background Music (Always)</p>
-        <p style={{ color: progress(frame, 60, 120) ? '#38bdf8' : '#666' }}>Track 2: Ambient Effect (From frame 60)</p>
-        <p style={{ color: progress(frame, 150, 240) ? '#38bdf8' : '#666' }}>Track 3: Narrative Overlay (From frame 150)</p>
+      <div style={{ marginTop: 80, display: 'flex', gap: 50, zIndex: 1 }}>
+        <div style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
+          <div style={{
+            width: 14,
+            height: 14,
+            borderRadius: '50%',
+            backgroundColor: '#3b82f6',
+            boxShadow: '0 0 10px #3b82f6'
+          }} />
+          <span style={{ fontSize: 18, color: '#94a3b8', fontWeight: 500 }}>Ambient BGM</span>
+        </div>
+        <div style={{
+          display: 'flex',
+          alignItems: 'center',
+          gap: 12,
+          transition: 'opacity 0.3s ease',
+          opacity: frame >= 60 ? 1 : 0.2
+        }}>
+          <div style={{
+            width: 14,
+            height: 14,
+            borderRadius: '50%',
+            backgroundColor: '#a855f7',
+            boxShadow: frame >= 60 ? '0 0 10px #a855f7' : 'none'
+          }} />
+          <span style={{ fontSize: 18, color: '#94a3b8', fontWeight: 500 }}>Action SFX</span>
+        </div>
       </div>
-
-      <Audio src="/test-audio.mp3" volume={0.3} />
-
-      <Sequence from={60}>
-        <Audio src="/test-audio.mp3" startFrom={100} volume={0.5} />
-      </Sequence>
-
-      <Sequence from={150}>
-        <Audio src="/test-audio.mp3" startFrom={200} volume={0.7} />
-      </Sequence>
     </div>
   );
-};
-
-const progress = (frame: number, start: number, duration: number) => {
-  return frame >= start && frame < start + duration;
 };
