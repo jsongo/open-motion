@@ -27,6 +27,16 @@ export const CompositionProvider: React.FC<{
   }, [currentFrame]);
 
   React.useEffect(() => {
+    // Also set ready when children might have finished async loading
+    if (typeof window !== 'undefined') {
+      const delayCount = (window as any).__OPEN_MOTION_DELAY_RENDER_COUNT__ || 0;
+      if (delayCount === 0) {
+        (window as any).__OPEN_MOTION_READY__ = true;
+      }
+    }
+  }, []);
+
+  React.useEffect(() => {
     setCurrentFrame(frame);
   }, [frame]);
 
@@ -491,6 +501,37 @@ export const OffthreadVideo: React.FC<{
 
   // Fallback to normal Video for Player/Preview
   return <Video {...props} />;
+};
+
+/**
+ * Media Metadata Analysis
+ */
+export const getVideoMetadata = async (src: string): Promise<{ durationInSeconds: number; width: number; height: number }> => {
+  return new Promise((resolve, reject) => {
+    const video = document.createElement('video');
+    video.src = src;
+    video.preload = 'metadata';
+    video.onloadedmetadata = () => {
+      resolve({
+        durationInSeconds: video.duration,
+        width: video.videoWidth,
+        height: video.videoHeight,
+      });
+    };
+    video.onerror = () => reject(new Error(`Failed to load video metadata for: ${src}`));
+  });
+};
+
+export const getAudioDuration = async (src: string): Promise<number> => {
+  return new Promise((resolve, reject) => {
+    const audio = document.createElement('audio');
+    audio.src = src;
+    audio.preload = 'metadata';
+    audio.onloadedmetadata = () => {
+      resolve(audio.duration);
+    };
+    audio.onerror = () => reject(new Error(`Failed to load audio metadata for: ${src}`));
+  });
 };
 
 export * from './Player';

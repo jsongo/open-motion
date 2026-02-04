@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useState, useEffect } from 'react';
 import {
   CompositionProvider,
   useCurrentFrame,
@@ -7,7 +7,11 @@ import {
   Loop,
   Easing,
   interpolate,
-  Composition
+  Composition,
+  getVideoMetadata,
+  getAudioDuration,
+  delayRender,
+  continueRender
 } from '@open-motion/core';
 import { Transition, ThreeCanvas, Lottie } from '@open-motion/components';
 import * as THREE from 'three';
@@ -15,6 +19,16 @@ import * as THREE from 'three';
 const DemoVideo = () => {
   const frame = useCurrentFrame();
   const { width, height } = useVideoConfig();
+  const [videoMeta, setVideoMeta] = useState<{ duration: number } | null>(null);
+
+  useEffect(() => {
+    const handle = delayRender('Loading demo assets');
+    getVideoMetadata('https://interactive-examples.mdn.mozilla.net/media/cc0-videos/flower.mp4')
+      .then(meta => {
+        setVideoMeta({ duration: meta.durationInSeconds });
+        continueRender(handle);
+      });
+  }, []);
 
   const easeProgress = interpolate(frame, [0, 100], [0, 1], {
     easing: Easing.inOutExpo
@@ -34,7 +48,7 @@ const DemoVideo = () => {
       overflow: 'hidden'
     }}>
       <Transition type="slide" direction="top" style={{ marginBottom: 40 }}>
-        <h1 style={{ fontSize: 60 }}>Integrations & 3D</h1>
+        <h1 style={{ fontSize: 60 }}>Integrations & Media Info</h1>
       </Transition>
 
       <div style={{ display: 'flex', gap: 40, alignItems: 'center' }}>
@@ -69,9 +83,26 @@ const DemoVideo = () => {
         </div>
 
         <div style={{ textAlign: 'center' }}>
-          <h3>Lottie Animation</h3>
-          <div style={{ width: 300, height: 300, backgroundColor: '#1e293b', borderRadius: 20 }}>
-            <Lottie url="https://assets10.lottiefiles.com/packages/lf20_m6cuL6.json" />
+          <h3>Media Metadata</h3>
+          <div style={{
+            width: 300,
+            height: 300,
+            backgroundColor: '#1e293b',
+            borderRadius: 20,
+            display: 'flex',
+            flexDirection: 'column',
+            justifyContent: 'center',
+            alignItems: 'center',
+            fontSize: 20,
+            padding: 20
+          }}>
+            <p>Video Duration:</p>
+            <p style={{ color: '#10b981', fontSize: 40, fontWeight: 'bold' }}>
+              {videoMeta ? `${videoMeta.duration.toFixed(2)}s` : 'Loading...'}
+            </p>
+            <p style={{ fontSize: 14, color: '#888', marginTop: 20 }}>
+              Captured using <code>getVideoMetadata()</code>
+            </p>
           </div>
         </div>
       </div>

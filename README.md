@@ -22,9 +22,9 @@ OpenMotion is a high-performance, open-source alternative to Remotion. It allows
 
 ### 🎬 Showcases
 
-| Feature Showcase | Media Showcase |
-| :---: | :---: |
-| ![Feature Showcase](assets/feature-showcase.gif) | ![Media Showcase](assets/media-showcase.gif) |
+| Feature Showcase | Media Showcase | Integrations & 3D |
+| :---: | :---: | :---: |
+| ![Feature Showcase](assets/feature-showcase.gif) | ![Media Showcase](assets/media-showcase.gif) | ![Integrations Showcase](assets/integrations-showcase.gif) |
 
 ## ✨ Features
 
@@ -32,7 +32,8 @@ OpenMotion is a high-performance, open-source alternative to Remotion. It allows
 - ⏱️ **Frame-Perfect Determinism**: Advanced time-hijacking ensures every frame is identical.
 - 🚀 **Parallel Rendering**: Scale your rendering speed by utilizing all CPU cores.
 - 🎵 **Multi-track Audio Mixing**: Support for multiple `<Audio />` with independent volume.
-- 📈 **Animation Components**: Built-in library for Typewriter, Breathing Buttons, and Progress Bars.
+- 📈 **Animation Components**: Built-in library for Loop, Transitions, Easing, and more.
+- 📦 **External Integrations**: Native support for **Three.js** and **Lottie** animations.
 - 📹 **Offthread Video**: High-performance video decoding moved to background processes.
 
 ## 📦 Packages
