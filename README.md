@@ -25,6 +25,7 @@ OpenMotion is a high-performance, open-source alternative to Remotion. It allows
 | Feature Showcase | Media Showcase | Integrations & 3D |
 | :---: | :---: | :---: |
 | ![Feature Showcase](assets/feature-showcase.gif) | ![Media Showcase](assets/media-showcase.gif) | ![Integrations Showcase](assets/integrations-showcase.gif) |
+| Brand, Dashboard, Easing | Video, Audio | Three.js, Lottie, Captions |
 
 ## ✨ Features
 
