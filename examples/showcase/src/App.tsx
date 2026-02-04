@@ -3,6 +3,7 @@ import { ShowcaseVideo } from './scenes/media/ShowcaseVideo';
 import { MediaShowcase } from './scenes/media/MediaShowcase';
 import { CenteringShowcase } from './scenes/layout/CenteringShowcase';
 import { IntegrationsShowcase } from './scenes/integrations/IntegrationsShowcase';
+import { HelloWorldVideo } from './scenes/hello-world';
 
 export const App = () => {
   const isRendering = typeof (window as any).__OPEN_MOTION_FRAME__ === 'number';
@@ -13,12 +14,16 @@ export const App = () => {
   const mediaConfig = { width: 1280, height: 720, fps: 30, durationInFrames: 240 };
   const centeringConfig = { width: 1280, height: 720, fps: 30, durationInFrames: 60 };
   const integrationsConfig = { width: 1280, height: 720, fps: 30, durationInFrames: 120 };
+  const helloWorldConfig = { width: 1280, height: 720, fps: 30, durationInFrames: 90 };
 
   if (isRendering) {
-    let Component = ShowcaseVideo;
-    let activeConfig = featureConfig;
+    let Component = HelloWorldVideo;
+    let activeConfig = helloWorldConfig;
 
-    if (compositionId === 'media-showcase') {
+    if (compositionId === 'feature-showcase') {
+      Component = ShowcaseVideo;
+      activeConfig = featureConfig;
+    } else if (compositionId === 'media-showcase') {
       Component = MediaShowcase;
       activeConfig = mediaConfig;
     } else if (compositionId === 'centering-test') {
@@ -38,9 +43,10 @@ export const App = () => {
 
   return (
     <div style={{ width: '100vw', height: '100vh', backgroundColor: '#f0f2f5' }}>
-      <CompositionProvider config={centeringConfig} frame={frame}>
-        <CenteringShowcase />
+      <CompositionProvider config={helloWorldConfig} frame={frame}>
+        <HelloWorldVideo />
         <div style={{ display: 'none' }}>
+          <Composition id="hello-world" component={HelloWorldVideo} {...helloWorldConfig} />
           <Composition id="feature-showcase" component={ShowcaseVideo} {...featureConfig} />
           <Composition id="media-showcase" component={MediaShowcase} {...mediaConfig} />
           <Composition id="centering-test" component={CenteringShowcase} {...centeringConfig} />
