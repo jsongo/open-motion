@@ -99,6 +99,8 @@ npx open-motion render -u http://localhost:5173 -o output.mp4
 - `parseSrt(srtContent)`: Utility to convert SRT files to subtitle arrays.
 - `<Captions />`: Flexible subtitle renderer.
 - `getVideoMetadata(url)`: Asynchronously fetch video dimensions and duration.
+- `getAudioDuration(url)`: Asynchronously fetch audio duration.
+- `<TikTokCaption />`: A pre-styled component for TikTok-like animated captions.
 
 ## 📜 License
 
