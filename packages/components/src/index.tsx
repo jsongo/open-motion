@@ -1,4 +1,6 @@
 import React from 'react';
+import { useCurrentFrame, useVideoConfig, interpolate, spring, Easing, Sequence } from '@open-motion/core';
+
 /**
  * Series Component: automatically calculates 'from' for its children
  * based on their duration.
@@ -10,15 +12,16 @@ export const Series: React.FC<{
 
   return (
     <>
-      {React.Children.map(children, (child) => {
-        const from = currentFrom;
-        currentFrom += child.props.durationInFrames || 0;
-        return (
-          <Sequence from={from} durationInFrames={child.props.durationInFrames}>
-            {child}
-          </Sequence>
-        );
-      })}
+    {React.Children.map(children, (child) => {
+      const from = currentFrom;
+      const { durationInFrames } = child.props;
+      currentFrom += durationInFrames || 0;
+      return (
+        <Sequence from={from} durationInFrames={durationInFrames}>
+          {child.props.children}
+        </Sequence>
+      );
+    })}
     </>
   );
 };

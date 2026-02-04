@@ -6,6 +6,5 @@ dist
 .DS_Store
 .turbo
 .parcel-cache
-!assets/*.mp4
 progress.md.worktrees/
 progress.md

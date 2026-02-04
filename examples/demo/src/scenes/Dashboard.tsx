@@ -17,7 +17,6 @@ export const Dashboard = () => {
 
   return (
     <div style={{
-      flex: 1,
       backgroundColor: '#0f172a',
       width: '100%',
       height: '100%',
