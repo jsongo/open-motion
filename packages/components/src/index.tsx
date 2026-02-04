@@ -1,5 +1,15 @@
 import React, { useRef, useEffect, useMemo } from 'react';
-import { useCurrentFrame, useVideoConfig, interpolate, spring, Easing, Sequence, delayRender, continueRender } from '@open-motion/core';
+import {
+  useCurrentFrame,
+  useVideoConfig,
+  interpolate,
+  spring,
+  Easing,
+  Sequence,
+  delayRender,
+  continueRender,
+  SubtitleItem
+} from '@open-motion/core';
 import * as THREE from 'three';
 
 /**
@@ -100,6 +110,92 @@ export const Lottie: React.FC<{
   }, [frame]);
 
   return <div ref={containerRef} style={{ width: '100%', height: '100%', ...style }} />;
+};
+
+/**
+ * Captions Component: Renders SRT subtitles with TikTok style support.
+ */
+export const Captions: React.FC<{
+  subtitles: SubtitleItem[];
+  style?: React.CSSProperties;
+  renderCaption?: (text: string, active: boolean) => React.ReactNode;
+}> = ({ subtitles, style, renderCaption }) => {
+  const frame = useCurrentFrame();
+  const { fps } = useVideoConfig();
+  const currentTime = frame / fps;
+
+  const activeSubtitle = subtitles.find(
+    (s) => currentTime >= s.startInSeconds && currentTime <= s.endInSeconds
+  );
+
+  if (!activeSubtitle) return null;
+
+  if (renderCaption) {
+    return <div style={style}>{renderCaption(activeSubtitle.text, true)}</div>;
+  }
+
+  return (
+    <div style={{
+      position: 'absolute',
+      bottom: 100,
+      width: '100%',
+      display: 'flex',
+      justifyContent: 'center',
+      padding: '0 20px',
+      textAlign: 'center',
+      ...style
+    }}>
+      <div style={{
+        backgroundColor: 'rgba(0,0,0,0.7)',
+        color: 'white',
+        padding: '10px 20px',
+        borderRadius: 10,
+        fontSize: 32,
+        fontWeight: 'bold'
+      }}>
+        {activeSubtitle.text}
+      </div>
+    </div>
+  );
+};
+
+/**
+ * TikTokCaption: A pre-styled component for TikTok-like animated captions.
+ */
+export const TikTokCaption: React.FC<{
+  text: string;
+  active: boolean;
+  style?: React.CSSProperties;
+}> = ({ text, active, style }) => {
+  const frame = useCurrentFrame();
+  // Simple word-level highlight simulation
+  const words = text.split(' ');
+  const progress = interpolate(frame % 30, [0, 30], [0, words.length]);
+
+  return (
+    <div style={{
+      fontSize: 60,
+      fontWeight: 900,
+      color: 'white',
+      textShadow: '4px 4px 0px #000',
+      display: 'flex',
+      flexWrap: 'wrap',
+      justifyContent: 'center',
+      gap: '15px',
+      ...style
+    }}>
+      {words.map((word, i) => (
+        <span key={i} style={{
+          backgroundColor: Math.floor(progress) === i ? '#ff0050' : 'transparent',
+          padding: '0 10px',
+          transform: Math.floor(progress) === i ? 'scale(1.1)' : 'scale(1)',
+          transition: 'all 0.1s ease'
+        }}>
+          {word}
+        </span>
+      ))}
+    </div>
+  );
 };
 
 /**

@@ -534,4 +534,42 @@ export const getAudioDuration = async (src: string): Promise<number> => {
   });
 };
 
+/**
+ * SRT Subtitle Parser
+ */
+export interface SubtitleItem {
+  id: number;
+  startInSeconds: number;
+  endInSeconds: number;
+  text: string;
+}
+
+export const parseSrt = (srtContent: string): SubtitleItem[] => {
+  const items: SubtitleItem[] = [];
+  const blocks = srtContent.trim().split(/\n\s*\n/);
+
+  for (const block of blocks) {
+    const lines = block.split('\n');
+    if (lines.length < 3) continue;
+
+    const id = parseInt(lines[0], 10);
+    const timeMatch = lines[1].match(/(\d{2}:\d{2}:\d{2},\d{3}) --> (\d{2}:\d{2}:\d{2},\d{3})/);
+    if (!timeMatch) continue;
+
+    const parseTime = (t: string) => {
+      const [h, m, s_ms] = t.split(':');
+      const [s, ms] = s_ms.split(',');
+      return parseInt(h, 10) * 3600 + parseInt(m, 10) * 60 + parseInt(s, 10) + parseInt(ms, 10) / 1000;
+    };
+
+    items.push({
+      id,
+      startInSeconds: parseTime(timeMatch[1]),
+      endInSeconds: parseTime(timeMatch[2]),
+      text: lines.slice(2).join('\n'),
+    });
+  }
+  return items;
+};
+
 export * from './Player';

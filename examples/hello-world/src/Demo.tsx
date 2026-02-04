@@ -11,15 +11,27 @@ import {
   getVideoMetadata,
   getAudioDuration,
   delayRender,
-  continueRender
+  continueRender,
+  parseSrt
 } from '@open-motion/core';
-import { Transition, ThreeCanvas, Lottie } from '@open-motion/components';
+import { Transition, ThreeCanvas, Lottie, Captions, TikTokCaption } from '@open-motion/components';
 import * as THREE from 'three';
+
+const SRT_CONTENT = `
+1
+00:00:00,000 --> 00:00:02,000
+Welcome to OpenMotion
+
+2
+00:00:02,000 --> 00:00:04,000
+Create videos with React
+`;
 
 const DemoVideo = () => {
   const frame = useCurrentFrame();
   const { width, height } = useVideoConfig();
   const [videoMeta, setVideoMeta] = useState<{ duration: number } | null>(null);
+  const subtitles = parseSrt(SRT_CONTENT);
 
   useEffect(() => {
     const handle = delayRender('Loading demo assets');
@@ -29,10 +41,6 @@ const DemoVideo = () => {
         continueRender(handle);
       });
   }, []);
-
-  const easeProgress = interpolate(frame, [0, 100], [0, 1], {
-    easing: Easing.inOutExpo
-  });
 
   return (
     <div style={{
@@ -48,71 +56,54 @@ const DemoVideo = () => {
       overflow: 'hidden'
     }}>
       <Transition type="slide" direction="top" style={{ marginBottom: 40 }}>
-        <h1 style={{ fontSize: 60 }}>Integrations & Media Info</h1>
+        <h1 style={{ fontSize: 60 }}>Captions & Subtitles</h1>
       </Transition>
 
       <div style={{ display: 'flex', gap: 40, alignItems: 'center' }}>
         <div style={{ textAlign: 'center' }}>
-          <h3>Three.js (3D Cube)</h3>
-          <ThreeCanvas
-            width={300}
-            height={300}
-            init={(scene, camera) => {
-              const geometry = new THREE.BoxGeometry(1, 1, 1);
-              const material = new THREE.MeshStandardMaterial({ color: 0x00aaff });
-              const cube = new THREE.Mesh(geometry, material);
-              cube.name = 'cube';
-              scene.add(cube);
-
-              const light = new THREE.DirectionalLight(0xffffff, 1);
-              light.position.set(2, 2, 5);
-              scene.add(light);
-              scene.add(new THREE.AmbientLight(0xffffff, 0.5));
-
-              camera.position.z = 3;
-            }}
-            renderScene={(scene, _camera, frame) => {
-              const cube = scene.getObjectByName('cube');
-              if (cube) {
-                cube.rotation.x = frame * 0.05;
-                cube.rotation.y = frame * 0.05;
-              }
-            }}
-            style={{ borderRadius: 20, backgroundColor: '#1e293b' }}
-          />
-        </div>
-
-        <div style={{ textAlign: 'center' }}>
-          <h3>Media Metadata</h3>
+          <h3>TikTok Style Captions</h3>
           <div style={{
-            width: 300,
+            width: 500,
             height: 300,
             backgroundColor: '#1e293b',
             borderRadius: 20,
             display: 'flex',
-            flexDirection: 'column',
             justifyContent: 'center',
             alignItems: 'center',
-            fontSize: 20,
             padding: 20
           }}>
-            <p>Video Duration:</p>
-            <p style={{ color: '#10b981', fontSize: 40, fontWeight: 'bold' }}>
-              {videoMeta ? `${videoMeta.duration.toFixed(2)}s` : 'Loading...'}
-            </p>
-            <p style={{ fontSize: 14, color: '#888', marginTop: 20 }}>
-              Captured using <code>getVideoMetadata()</code>
-            </p>
+            <Captions
+              subtitles={subtitles}
+              renderCaption={(text) => <TikTokCaption text={text} active={true} />}
+            />
           </div>
+        </div>
+
+        <div style={{ textAlign: 'center' }}>
+          <h3>3D Background</h3>
+          <ThreeCanvas
+            width={300}
+            height={300}
+            init={(scene, camera) => {
+              const geometry = new THREE.TorusKnotGeometry(0.8, 0.3, 100, 16);
+              const material = new THREE.MeshStandardMaterial({ color: 0xee00ff });
+              const mesh = new THREE.Mesh(geometry, material);
+              mesh.name = 'knot';
+              scene.add(mesh);
+              scene.add(new THREE.PointLight(0xffffff, 1).set(2, 2, 5));
+              camera.position.z = 3;
+            }}
+            renderScene={(scene, _camera, frame) => {
+              const mesh = scene.getObjectByName('knot');
+              if (mesh) mesh.rotation.y = frame * 0.02;
+            }}
+            style={{ borderRadius: 20, backgroundColor: '#1e293b' }}
+          />
         </div>
       </div>
 
-      <div style={{ marginTop: 40, display: 'flex', gap: 20 }}>
-        <Loop durationInFrames={40}>
-          <div style={{ padding: '10px 20px', backgroundColor: '#3b82f6', borderRadius: 10 }}>
-            Looping UI
-          </div>
-        </Loop>
+      <div style={{ marginTop: 40 }}>
+        <p>Current Video Meta: {videoMeta ? `${videoMeta.duration.toFixed(1)}s` : '...'}</p>
       </div>
     </div>
   );
