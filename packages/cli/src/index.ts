@@ -1,6 +1,6 @@
 import { renderFrames, getCompositions } from '@open-motion/renderer';
 import { chromium } from 'playwright';
-import { encodeVideo } from '@open-motion/encoder';
+import { encodeVideo, encodeGif, encodeWebP } from '@open-motion/encoder';
 import path from 'path';
 import fs from 'fs';
 import { Command } from 'commander';
@@ -157,6 +157,7 @@ export const runRender = async (options: {
   props?: string;
   concurrency?: number;
   publicDir?: string;
+  format?: 'mp4' | 'gif' | 'webp' | 'webm' | 'auto';
 }) => {
   const tmpDir = path.join(process.cwd(), '.open-motion-tmp');
   const inputProps = options.props ? JSON.parse(options.props) : {};
@@ -282,13 +283,44 @@ export const runRender = async (options: {
 
   const encodeBar = multibar.create(100, 0, { task: 'Encoding ' });
 
-  await encodeVideo({
-    framesDir: tmpDir,
-    fps: config.fps,
-    outputFile: options.out,
-    audioAssets: resolvedAudioAssets,
-    onProgress: (percent) => encodeBar.update(Math.round(percent))
-  });
+  // Determine output format
+  let format = options.format || 'auto';
+  if (format === 'auto') {
+    const ext = path.extname(options.out).toLowerCase();
+    if (ext === '.gif') format = 'gif';
+    else if (ext === '.webp') format = 'webp';
+    else if (ext === '.webm') format = 'webm';
+    else format = 'mp4';
+  }
+
+  if (format === 'gif') {
+    await encodeGif({
+      framesDir: tmpDir,
+      fps: config.fps,
+      outputFile: options.out,
+      width: config.width,
+      height: config.height,
+      onProgress: (percent) => encodeBar.update(Math.round(percent))
+    });
+  } else if (format === 'webp') {
+    await encodeWebP({
+      framesDir: tmpDir,
+      fps: config.fps,
+      outputFile: options.out,
+      width: config.width,
+      height: config.height,
+      onProgress: (percent) => encodeBar.update(Math.round(percent))
+    });
+  } else {
+    // Both MP4 and WebM use encodeVideo, the output format is determined by file extension
+    await encodeVideo({
+      framesDir: tmpDir,
+      fps: config.fps,
+      outputFile: options.out,
+      audioAssets: resolvedAudioAssets,
+      onProgress: (percent) => encodeBar.update(Math.round(percent))
+    });
+  }
 
   encodeBar.update(100);
   multibar.stop();
@@ -336,6 +368,7 @@ export const main = () => {
     .option('--fps <number>', 'Override FPS', parseInt)
     .option('--duration <number>', 'Override duration in frames', parseInt)
     .option('--public-dir <path>', 'Public directory path for static assets (default: "./public")')
+    .option('--format <format>', 'Output format (mp4, webm, gif, webp, auto)', 'auto')
     .action(async (options) => {
       try {
         await runRender({
@@ -348,7 +381,8 @@ export const main = () => {
           height: options.height,
           fps: options.fps,
           duration: options.duration,
-          publicDir: options.publicDir
+          publicDir: options.publicDir,
+          format: options.format
         });
       } catch (err) {
         console.error('Render failed:', err);

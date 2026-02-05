@@ -115,6 +115,12 @@ open-motion render -u http://localhost:5173 -o out.mp4 --duration 420
 
 # Render to GIF (14 seconds at 30fps)
 open-motion render -u http://localhost:5173 -o out.gif --duration 420
+
+# Render to WebP (better quality than GIF)
+open-motion render -u http://localhost:5173 -o out.webp --duration 420
+
+# Render to WebM (transparent video support)
+open-motion render -u http://localhost:5173 -o out.webm --duration 420
 ```
 
 **Duration explained**: `--duration 420` means 420 frames. At 30fps, that's 420 ÷ 30 = **14 seconds** of video.
@@ -261,14 +267,17 @@ open-motion render -u http://localhost:5173 -o animation.gif \
 ```
 
 **File Formats**
-- **MP4**: Full video with audio support
+- **MP4**: Full video with audio support (H.264)
+- **WebM**: Web-optimized video with transparency support (VP9)
 - **GIF**: Lightweight animations (no audio)
+- **WebP**: High-quality animated images (better than GIF, no audio)
 
 **Quality Parameters**
 - `--width`: Output width in pixels
 - `--height`: Output height in pixels
 - `--fps`: Frames per second (default: 30)
 - `--duration`: Total frames (e.g., 420 = 14 seconds at 30fps)
+- `--format`: Explicit format (mp4, webm, gif, webp, auto)
 
 ## 📜 License
 
