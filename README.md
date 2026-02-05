@@ -86,6 +86,9 @@ npm install @open-motion/core @open-motion/components
 ```bash
 # Install CLI tools globally
 pnpm install -g @open-motion/cli @open-motion/renderer
+
+# Install Playwright browsers (required for rendering)
+npx playwright install chromium
 ```
 
 ### Create & Run Your First Project
@@ -97,14 +100,23 @@ cd fun-video && pnpm install
 
 # Start development server
 pnpm run dev
+```
 
-# In another terminal, render to video
-# Note: Check the port number in the dev server output (e.g., 5173, 5177, etc.)
+**Note**: Check the port number in the dev server output. If 5173 is in use, Vite will use 5174, 5177, etc.
+
+### Render Your Video
+
+In another terminal, render your project:
+
+```bash
+# Render to MP4 (14 seconds at 30fps)
 open-motion render -u http://localhost:5173 -o out.mp4 --duration 420
 
-# Or render to GIF
+# Render to GIF (14 seconds at 30fps)
 open-motion render -u http://localhost:5173 -o out.gif --duration 420
 ```
+
+**Duration explained**: `--duration 420` means 420 frames. At 30fps, that's 420 ÷ 30 = **14 seconds** of video.
 
 ### Create a Composition
 
@@ -126,28 +138,136 @@ const MyScene = () => {
 
 **Note about ports**: If port 5173 is already in use, Vite will automatically try 5174, 5175, etc. Check the dev server output for the actual port number (e.g., "Local: http://localhost:5177/").
 
-## 📖 Features API
+## 📚 API Reference
+
+Complete reference for all OpenMotion features and components.
+
+### Core Hooks
+
+**`useCurrentFrame()`**
+Get the current frame number in your animation.
+
+```tsx
+const frame = useCurrentFrame();
+const opacity = interpolate(frame, [0, 30], [0, 1]);
+```
+
+**`useVideoConfig()`**
+Access video configuration (width, height, fps, durationInFrames).
+
+```tsx
+const { width, height, fps } = useVideoConfig();
+```
 
 ### Animation & Transitions
-- `<Loop durationInFrames={30}>`: Create looping time contexts for sub-animations.
-- `<Transition type="wipe" direction="right">`: Smooth enter/exit transitions.
-- `Easing`: Complete library of easing functions (e.g., `Easing.inOutExpo`).
+
+**`<Loop durationInFrames={30}>`**
+Create looping time contexts for sub-animations.
+
+```tsx
+<Loop durationInFrames={60}>
+  <SpinningLogo />
+</Loop>
+```
+
+**`<Transition type="wipe" direction="right">`**
+Smooth enter/exit transitions. Types: `fade`, `wipe`, `slide`, `zoom`.
+
+```tsx
+<Transition type="wipe" direction="right">
+  <Title text="Hello World" />
+</Transition>
+```
+
+**`Easing.inOutExpo`**
+Complete library of easing functions:
+- `Easing.linear`, `Easing.easeIn`, `Easing.easeOut`, `Easing.easeInOut`
+- `Easing.inOutCubic`, `Easing.outBack`, `Easing.inExpo`, and more
+
+```tsx
+const value = interpolate(frame, [0, 30], [0, 100], {
+  easing: Easing.outCubic,
+});
+```
 
 ### 3D & Lottie Integration
-- `<ThreeCanvas />`: Seamlessly render Three.js scenes synced with video frames.
-- `<Lottie url="..." />`: Declarative Lottie animations with frame-accurate control.
 
-### Captions & Media
-- `parseSrt(srtContent)`: Utility to convert SRT files to subtitle arrays.
-- `<Captions />`: Flexible subtitle renderer.
-- `getVideoMetadata(url)`: Asynchronously fetch video dimensions and duration.
-- `getAudioDuration(url)`: Asynchronously fetch audio duration.
-- `<TikTokCaption />`: A pre-styled component for TikTok-like animated captions.
+**`<ThreeCanvas />`**
+Render Three.js scenes synced with video frames. See `packages/components` for details.
 
-### Output Formats
-- **Automatic Format Detection**: CLI automatically detects output format from file extension (.mp4, .gif).
-- **Multiple Formats**: Render to MP4 with audio or GIF for lightweight sharing.
-- **Custom Dimensions**: Optional width/height parameters for output scaling.
+**`<Lottie url="..." />`**
+Declarative Lottie animations with frame-accurate control.
+
+```tsx
+<Lottie url="/animations/logo.json" />
+```
+
+### Media & Captions
+
+**`<Audio src="..." volume={0.8} />`**
+Multi-track audio support with independent volume and timing.
+
+```tsx
+<Audio src="/music.mp3" volume={0.5} startFrom={30} startFrame={60} />
+```
+
+**`parseSrt(srtContent)`**
+Convert SRT subtitle files to arrays.
+
+```tsx
+const subtitles = parseSrt(await fetch('/subtitles.srt').then(r => r.text()));
+```
+
+**`<Captions subtitles={subtitles} />`**
+Flexible subtitle renderer with styling options.
+
+```tsx
+<Captions subtitles={subtitles} color="white" fontSize={24} />
+```
+
+**`<TikTokCaption />`**
+Pre-styled component for TikTok-like animated captions.
+
+**`getVideoMetadata(url)`**
+Fetch video dimensions and duration.
+
+```tsx
+const { width, height, durationInSeconds } = await getVideoMetadata('/video.mp4');
+```
+
+**`<OffthreadVideo src="..." />`**
+High-performance video decoding in background processes.
+
+### Output & Export Options
+
+**CLI Commands**
+
+```bash
+# Basic rendering
+open-motion render -u http://localhost:5173 -o video.mp4
+
+# With custom settings
+open-motion render -u http://localhost:5173 -o video.mp4 \
+  --duration 420 \
+  --width 1920 \
+  --height 1080 \
+  --fps 30
+
+# Render to GIF
+open-motion render -u http://localhost:5173 -o animation.gif \
+  --duration 420 \
+  --public-dir ./public
+```
+
+**File Formats**
+- **MP4**: Full video with audio support
+- **GIF**: Lightweight animations (no audio)
+
+**Quality Parameters**
+- `--width`: Output width in pixels
+- `--height`: Output height in pixels
+- `--fps`: Frames per second (default: 30)
+- `--duration`: Total frames (e.g., 420 = 14 seconds at 30fps)
 
 ## 📜 License
 
