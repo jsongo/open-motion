@@ -1,6 +1,6 @@
 {
   "name": "@open-motion/cli",
-  "version": "0.0.6",
+  "version": "0.0.7",
   "bin": {
     "open-motion": "dist/bin.js"
   },
@@ -24,7 +24,8 @@
     "@open-motion/encoder": "workspace:*",
     "@open-motion/renderer": "file:../renderer",
     "cli-progress": "^3.12.0",
-    "commander": "^11.0.0"
+    "commander": "^11.0.0",
+    "playwright": "^1.58.1"
   },
   "devDependencies": {
     "@types/cli-progress": "^3.11.6"

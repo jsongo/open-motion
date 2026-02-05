@@ -1,4 +1,5 @@
 import { renderFrames, getCompositions } from '@open-motion/renderer';
+import { chromium } from 'playwright';
 import { encodeVideo } from '@open-motion/encoder';
 import path from 'path';
 import fs from 'fs';
@@ -160,6 +161,22 @@ export const runRender = async (options: {
   const tmpDir = path.join(process.cwd(), '.open-motion-tmp');
   const inputProps = options.props ? JSON.parse(options.props) : {};
   const startTime = Date.now();
+
+  // Check for browser installation before starting
+  try {
+    chromium.executablePath();
+  } catch (error) {
+    console.error('\n❌ Browser not found!');
+    console.error('\nPlaywright browsers need to be installed before rendering.');
+    console.error('\nPlease run one of the following commands:');
+    console.error('\n  # If using global installation:');
+    console.error('  npx playwright install');
+    console.error('\n  # If using local installation:');
+    console.error('  cd /path/to/your/project && npx playwright install');
+    console.error('\n  # Or install only the required browser:');
+    console.error('  npx playwright install chromium\n');
+    process.exit(1);
+  }
 
   console.log(`Fetching compositions from ${options.url}...`);
   let selectedComp: any = null;

@@ -91,6 +91,9 @@ importers:
       commander:
         specifier: ^11.0.0
         version: 11.1.0
+      playwright:
+        specifier: ^1.58.1
+        version: 1.58.1
     devDependencies:
       '@types/cli-progress':
         specifier: ^3.11.6
@@ -1583,6 +1586,7 @@ snapshots:
       '@open-motion/renderer': file:packages/renderer(react-dom@18.3.1(react@18.3.1))(react@18.3.1)
       cli-progress: 3.12.0
       commander: 11.1.0
+      playwright: 1.58.1
     transitivePeerDependencies:
       - react
       - react-dom

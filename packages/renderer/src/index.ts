@@ -1,8 +1,20 @@
-import { chromium, Page } from 'playwright';
+import { chromium, Page, BrowserType } from 'playwright';
+export { chromium } from 'playwright';
 import { getTimeHijackScript, VideoConfig } from '@open-motion/core';
 import fs from 'fs';
 import path from 'path';
 import { execSync } from 'child_process';
+
+// Check if Playwright browsers are installed
+export const checkBrowserInstallation = async (browserType: BrowserType): Promise<boolean> => {
+  try {
+    // Try to get the browser path - this will throw if not installed
+    const browserPath = browserType.executablePath();
+    return true;
+  } catch (error) {
+    return false;
+  }
+};
 
 // Helper to extract a single frame from a video using FFmpeg
 const extractFrame = (videoPath: string, time: number, outputPath: string) => {
