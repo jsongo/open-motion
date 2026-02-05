@@ -7,13 +7,15 @@
     "dev": "vite",
     "build": "vite build",
     "preview": "vite preview",
-    "render": "open-motion render -u http://localhost:5173 -o out.mp4"
+    "render": "open-motion render -u http://localhost:5173 -o out.mp4 --public-dir ./public"
   },
   "dependencies": {
+    "@open-motion/cli": "file:../../packages/cli",
     "@open-motion/core": "workspace:*",
+    "@open-motion/renderer": "file:../../packages/renderer",
+    "lucide-react": "^0.263.1",
     "react": "^18.0.0",
-    "react-dom": "^18.0.0",
-    "lucide-react": "^0.263.1"
+    "react-dom": "^18.0.0"
   },
   "devDependencies": {
     "@types/react": "^18.0.0",

@@ -8,3 +8,9 @@ dist
 .parcel-cache
 .worktrees/
 progress.md.worktrees/
+# Video files (keep only GIFs for README)
+*.mp4
+*.mov
+*.avi
+*.mkv
+*.webm

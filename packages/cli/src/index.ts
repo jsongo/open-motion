@@ -155,6 +155,7 @@ export const runRender = async (options: {
   duration?: number;
   props?: string;
   concurrency?: number;
+  publicDir?: string;
 }) => {
   const tmpDir = path.join(process.cwd(), '.open-motion-tmp');
   const inputProps = options.props ? JSON.parse(options.props) : {};
@@ -212,26 +213,52 @@ export const runRender = async (options: {
     compositionId: selectedComp.id,
     inputProps,
     concurrency: options.concurrency || 1,
+    publicDir: options.publicDir ? path.join(process.cwd(), options.publicDir) : undefined,
     onProgress: (frame) => renderBar.update(frame)
   });
 
   renderBar.update(config.durationInFrames);
 
+  // Helper to resolve audio paths to absolute file paths
+  const resolveAssetPath = (src: string): string => {
+    if (!src.startsWith('/') || src.startsWith('//')) {
+      return src;
+    }
+
+    // Look for public folder based on user input or common locations
+    const possiblePaths: string[] = [];
+
+    if (options.publicDir) {
+      possiblePaths.push(path.join(process.cwd(), options.publicDir, src.substring(1)));
+    }
+
+    // Common fallback paths
+    const commonPaths = [
+      path.join(process.cwd(), 'public', src.substring(1)),
+      path.join(process.cwd(), 'static', src.substring(1)),
+      path.join(process.cwd(), 'assets', src.substring(1)),
+    ];
+
+    for (const p of commonPaths) {
+      if (!possiblePaths.includes(p)) {
+        possiblePaths.push(p);
+      }
+    }
+
+    for (const p of possiblePaths) {
+      if (fs.existsSync(p)) {
+        return p;
+      }
+    }
+
+    return src;
+  };
+
   // Resolve audio paths to absolute file paths if they are relative URLs
   const resolvedAudioAssets = audioAssets.map(asset => {
     if (asset.src.startsWith('/') && !asset.src.startsWith('//')) {
-      // Look for public folder relative to the URL if possible, but for now
-      // let's try common locations
-      const possiblePaths = [
-        path.join(process.cwd(), 'examples/demo/public', asset.src.substring(1)),
-        path.join(process.cwd(), 'public', asset.src.substring(1)),
-      ];
-
-      for (const p of possiblePaths) {
-        if (fs.existsSync(p)) {
-          return { ...asset, src: p };
-        }
-      }
+      const resolvedPath = resolveAssetPath(asset.src);
+      return { ...asset, src: resolvedPath };
     }
     return asset;
   });
@@ -291,6 +318,7 @@ export const main = () => {
     .option('--height <number>', 'Override height', parseInt)
     .option('--fps <number>', 'Override FPS', parseInt)
     .option('--duration <number>', 'Override duration in frames', parseInt)
+    .option('--public-dir <path>', 'Public directory path for static assets (default: "./public")')
     .action(async (options) => {
       try {
         await runRender({
@@ -302,7 +330,8 @@ export const main = () => {
           width: options.width,
           height: options.height,
           fps: options.fps,
-          duration: options.duration
+          duration: options.duration,
+          publicDir: options.publicDir
         });
       } catch (err) {
         console.error('Render failed:', err);

@@ -16,6 +16,41 @@ const extractFrame = (videoPath: string, time: number, outputPath: string) => {
   }
 };
 
+// Helper to resolve asset path with publicDir
+const resolveAssetPath = (src: string, publicDir?: string): string => {
+  if (!src.startsWith('/') || src.startsWith('//')) {
+    return src;
+  }
+
+  const possiblePaths: string[] = [];
+
+  // Add specified publicDir as first priority
+  if (publicDir) {
+    possiblePaths.push(path.join(publicDir, src.substring(1)));
+  }
+
+  // Add common fallback paths - only add if not already covered
+  const commonPaths = [
+    path.join(process.cwd(), 'public', src.substring(1)),
+    path.join(process.cwd(), 'static', src.substring(1)),
+    path.join(process.cwd(), 'assets', src.substring(1)),
+  ];
+
+  for (const p of commonPaths) {
+    if (!possiblePaths.includes(p)) {
+      possiblePaths.push(p);
+    }
+  }
+
+  for (const p of possiblePaths) {
+    if (fs.existsSync(p)) {
+      return p;
+    }
+  }
+
+  return src;
+};
+
 export interface RenderOptions {
   url: string;
   config: VideoConfig;
@@ -24,6 +59,7 @@ export interface RenderOptions {
   inputProps?: any;
   concurrency?: number;
   onProgress?: (frame: number) => void;
+  publicDir?: string;
 }
 
 export interface GetCompositionsOptions {
@@ -66,7 +102,7 @@ export const getCompositions = async (url: string, options: GetCompositionsOptio
   return processedCompositions;
 };
 
-export const renderFrames = async ({ url, config, outputDir, compositionId, inputProps = {}, concurrency = 1, onProgress }: RenderOptions) => {
+export const renderFrames = async ({ url, config, outputDir, compositionId, inputProps = {}, concurrency = 1, publicDir, onProgress }: RenderOptions) => {
   if (!fs.existsSync(outputDir)) {
     fs.mkdirSync(outputDir, { recursive: true });
   }
@@ -133,7 +169,7 @@ export const renderFrames = async ({ url, config, outputDir, compositionId, inpu
         const ready = (window as any).__OPEN_MOTION_READY__ === true;
         const delayCount = (window as any).__OPEN_MOTION_DELAY_RENDER_COUNT__ || 0;
         return ready && delayCount === 0;
-      }, { timeout: 60000 });
+      }, { timeout: 120000 });  // Increased from 60s to 120s for complex scenes
       await page.waitForLoadState('networkidle');
 
       // Check for OffthreadVideo assets
@@ -143,21 +179,8 @@ export const renderFrames = async ({ url, config, outputDir, compositionId, inpu
         const videoFrames: Record<string, string> = {};
 
         for (const asset of videoAssets) {
-          // Resolve relative path to absolute
-          let localPath = asset.src;
-          if (asset.src.startsWith('/') && !asset.src.startsWith('//')) {
-            // Check common public folders
-            const possiblePaths = [
-              path.join(process.cwd(), 'examples/demo/public', asset.src.substring(1)),
-              path.join(process.cwd(), 'public', asset.src.substring(1)),
-            ];
-            for (const p of possiblePaths) {
-              if (fs.existsSync(p)) {
-                localPath = p;
-                break;
-              }
-            }
-          }
+          // Resolve relative path to absolute using provided publicDir
+          const localPath = resolveAssetPath(asset.src, publicDir);
 
           const tempFramePath = path.join(outputDir, `temp-${workerId}-${asset.id}.jpg`);
           if (extractFrame(localPath, asset.time, tempFramePath)) {
