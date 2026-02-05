@@ -75,6 +75,59 @@ export const encodeGif = ({ framesDir, fps, outputFile, width, height, onProgres
   });
 };
 
+export const encodeWebP = ({ framesDir, fps, outputFile, width, height, onProgress }: EncodeGifOptions) => {
+  // Verify frames exist
+  const files = fs.readdirSync(framesDir).filter(f => f.startsWith('frame-') && f.endsWith('.png'));
+  if (files.length === 0) {
+    throw new Error(`No frames found in ${framesDir}`);
+  }
+
+  return new Promise((resolve, reject) => {
+    const command = ffmpeg()
+      .input(path.join(framesDir, 'frame-%05d.png'))
+      .inputFPS(fps);
+
+    // Scale if dimensions are provided
+    const filters: string[] = [];
+    if (width && height) {
+      filters.push(`scale=${width}:${height}`);
+    }
+
+    if (filters.length > 0) {
+      command.videoFilters(filters);
+    }
+
+    command
+      .outputOptions([
+        '-c:v libwebp',
+        '-lossless 0',
+        '-compression_level 4',
+        '-q:v 80',
+        '-loop 0',
+        '-preset default',
+        '-an',
+        '-vsync 0'
+      ])
+      .on('start', (cmd) => {
+        // console.log('FFmpeg WebP encoding started with command:', cmd)
+      })
+      .on('progress', (progress) => {
+        if (progress.percent && onProgress) {
+          onProgress(progress.percent);
+        }
+      })
+      .on('end', () => {
+        // console.log('WebP encoding finished.');
+        resolve(outputFile);
+      })
+      .on('error', (err) => {
+        console.error('FFmpeg WebP encoding error:', err);
+        reject(err);
+      })
+      .save(outputFile);
+  });
+};
+
 export const encodeVideo = ({ framesDir, fps, outputFile, audioAssets = [], onProgress }: EncodeOptions) => {
   // Verify frames exist
   const files = fs.readdirSync(framesDir).filter(f => f.startsWith('frame-') && f.endsWith('.png'));
@@ -118,10 +171,9 @@ export const encodeVideo = ({ framesDir, fps, outputFile, audioAssets = [], onPr
         ...videoOptions,
         '-map 0:v',
         '-map [a]',
-        '-c:a aac',
+        '-c:a libvorbis',
         '-b:a 192k',
         '-ac 2',
-        '-shortest'
       ]);
     } else {
       command.outputOptions(videoOptions);
