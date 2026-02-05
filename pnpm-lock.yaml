@@ -37,67 +37,11 @@ importers:
         specifier: ^5.9.3
         version: 5.9.3
 
-  examples/demo:
-    dependencies:
-      '@open-motion/core':
-        specifier: workspace:*
-        version: link:../../packages/core
-      lucide-react:
-        specifier: ^0.263.1
-        version: 0.263.1(react@18.3.1)
-      react:
-        specifier: ^18.0.0
-        version: 18.3.1
-      react-dom:
-        specifier: ^18.0.0
-        version: 18.3.1(react@18.3.1)
-    devDependencies:
-      '@types/react':
-        specifier: ^18.0.0
-        version: 18.3.27
-      '@types/react-dom':
-        specifier: ^18.0.0
-        version: 18.3.7(@types/react@18.3.27)
-      '@vitejs/plugin-react':
-        specifier: ^4.2.0
-        version: 4.7.0(vite@5.4.21(@types/node@25.2.0))
-      typescript:
-        specifier: ^5.0.0
-        version: 5.9.3
-      vite:
-        specifier: ^5.0.0
-        version: 5.4.21(@types/node@25.2.0)
-
-  examples/hello-world:
-    dependencies:
-      react:
-        specifier: ^18.0.0
-        version: 18.3.1
-      react-dom:
-        specifier: ^18.0.0
-        version: 18.3.1(react@18.3.1)
-    devDependencies:
-      '@types/react':
-        specifier: ^18.0.0
-        version: 18.3.27
-      '@types/react-dom':
-        specifier: ^18.0.0
-        version: 18.3.7(@types/react@18.3.27)
-      '@vitejs/plugin-react':
-        specifier: ^4.2.0
-        version: 4.7.0(vite@5.4.21(@types/node@25.2.0))
-      typescript:
-        specifier: ^5.0.0
-        version: 5.9.3
-      vite:
-        specifier: ^5.0.0
-        version: 5.4.21(@types/node@25.2.0)
-
   examples/showcase:
     dependencies:
       '@open-motion/cli':
         specifier: file:../../packages/cli
-        version: file:packages/cli
+        version: file:packages/cli(react-dom@18.3.1(react@18.3.1))(react@18.3.1)
       '@open-motion/core':
         specifier: workspace:*
         version: link:../../packages/core
@@ -139,8 +83,8 @@ importers:
         specifier: workspace:*
         version: link:../encoder
       '@open-motion/renderer':
-        specifier: workspace:*
-        version: link:../renderer
+        specifier: file:../renderer
+        version: file:packages/renderer(react-dom@18.3.1(react@18.3.1))(react@18.3.1)
       cli-progress:
         specifier: ^3.12.0
         version: 3.12.0
@@ -1632,13 +1576,16 @@ snapshots:
       '@nodelib/fs.scandir': 2.1.5
       fastq: 1.20.1
 
-  '@open-motion/cli@file:packages/cli':
+  '@open-motion/cli@file:packages/cli(react-dom@18.3.1(react@18.3.1))(react@18.3.1)':
     dependencies:
       '@open-motion/core': link:packages/core
       '@open-motion/encoder': link:packages/encoder
-      '@open-motion/renderer': link:packages/renderer
+      '@open-motion/renderer': file:packages/renderer(react-dom@18.3.1(react@18.3.1))(react@18.3.1)
       cli-progress: 3.12.0
       commander: 11.1.0
+    transitivePeerDependencies:
+      - react
+      - react-dom
 
   '@open-motion/renderer@file:packages/renderer(react-dom@18.3.1(react@18.3.1))(react@18.3.1)':
     dependencies:
