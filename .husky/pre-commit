@@ -1,0 +1,19 @@
+#!/bin/sh
+. "$(dirname "$0")/_/husky.sh"
+
+echo "Running pre-commit checks..."
+echo ""
+
+# Run build for all packages
+echo "📦 Building packages..."
+pnpm build
+
+if [ $? -ne 0 ]; then
+  echo ""
+  echo "❌ Build failed. Please fix the errors before committing."
+  exit 1
+fi
+
+echo ""
+echo "✅ All checks passed!"
+echo ""

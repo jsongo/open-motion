@@ -17,6 +17,64 @@ export interface EncodeOptions {
   onProgress?: (percent: number) => void;
 }
 
+export interface EncodeGifOptions {
+  framesDir: string;
+  fps: number;
+  outputFile: string;
+  width?: number;
+  height?: number;
+  onProgress?: (percent: number) => void;
+}
+
+export const encodeGif = ({ framesDir, fps, outputFile, width, height, onProgress }: EncodeGifOptions) => {
+  // Verify frames exist
+  const files = fs.readdirSync(framesDir).filter(f => f.startsWith('frame-') && f.endsWith('.png'));
+  if (files.length === 0) {
+    throw new Error(`No frames found in ${framesDir}`);
+  }
+
+  return new Promise((resolve, reject) => {
+    const command = ffmpeg()
+      .input(path.join(framesDir, 'frame-%05d.png'))
+      .inputFPS(fps);
+
+    // Scale if dimensions are provided
+    const filters: string[] = [];
+    if (width && height) {
+      filters.push(`scale=${width}:${height}:flags=lanczos`);
+    }
+
+    // Optimize GIF with palette generation for better quality
+    if (filters.length > 0) {
+      command.videoFilters(filters);
+    }
+
+    command
+      .outputOptions([
+        '-f gif',
+        '-loop 0',  // Infinite loop
+        '-pix_fmt rgb24'
+      ])
+      .on('start', (cmd) => {
+        // console.log('FFmpeg GIF encoding started with command:', cmd)
+      })
+      .on('progress', (progress) => {
+        if (progress.percent && onProgress) {
+          onProgress(progress.percent);
+        }
+      })
+      .on('end', () => {
+        // console.log('GIF encoding finished.');
+        resolve(outputFile);
+      })
+      .on('error', (err) => {
+        console.error('FFmpeg GIF encoding error:', err);
+        reject(err);
+      })
+      .save(outputFile);
+  });
+};
+
 export const encodeVideo = ({ framesDir, fps, outputFile, audioAssets = [], onProgress }: EncodeOptions) => {
   // Verify frames exist
   const files = fs.readdirSync(framesDir).filter(f => f.startsWith('frame-') && f.endsWith('.png'));
