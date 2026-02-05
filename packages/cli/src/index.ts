@@ -50,7 +50,7 @@ export const runInit = async (projectName: string) => {
   <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>\${projectName}</title>
+    <title>${projectName}</title>
   </head>
   <body>
     <div id="root"></div>

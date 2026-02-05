@@ -116,7 +116,7 @@ npx open-motion render -u http://localhost:5173 -o output.gif
 npx open-motion render -u http://localhost:5173 -o output.mp4 --format gif
 ```
 
-## 📖 New Features API
+## 📖 Features API
 
 ### Animation & Transitions
 - `<Loop durationInFrames={30}>`: Create looping time contexts for sub-animations.
