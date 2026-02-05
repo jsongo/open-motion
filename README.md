@@ -39,6 +39,8 @@ OpenMotion is a high-performance, open-source alternative to Remotion. It allows
 - 📊 **Media Analysis**: Dynamic metadata extraction for video/audio (duration, dimensions).
 - 📹 **Offthread Video**: High-performance video decoding moved to background processes.
 - 📊 **Dynamic Metadata**: Calculate video dimensions, duration, and other properties dynamically based on input props.
+- 🎬 **GIF & Video Output**: Render to both MP4 video and GIF formats with automatic format detection.
+- 🛡️ **Pre-Flight Checks**: Built-in validation and helpful error messages for missing dependencies.
 
 ### Dynamic Metadata
 
@@ -98,14 +100,20 @@ const MyScene = () => {
 };
 ```
 
-### 2. Render to Video
+### 2. Render to Video or GIF
 
 ```bash
 # Start your dev server
 npm run dev
 
-# Render via CLI
+# Render to MP4 video (default)
 npx open-motion render -u http://localhost:5173 -o output.mp4
+
+# Render to GIF (automatically detected from file extension)
+npx open-motion render -u http://localhost:5173 -o output.gif
+
+# Or manually specify format
+npx open-motion render -u http://localhost:5173 -o output.mp4 --format gif
 ```
 
 ## 📖 New Features API
@@ -125,6 +133,11 @@ npx open-motion render -u http://localhost:5173 -o output.mp4
 - `getVideoMetadata(url)`: Asynchronously fetch video dimensions and duration.
 - `getAudioDuration(url)`: Asynchronously fetch audio duration.
 - `<TikTokCaption />`: A pre-styled component for TikTok-like animated captions.
+
+### Output Formats
+- **Automatic Format Detection**: CLI automatically detects output format from file extension (.mp4, .gif).
+- **Multiple Formats**: Render to MP4 with audio or GIF for lightweight sharing.
+- **Custom Dimensions**: Optional width/height parameters for output scaling.
 
 ## 📜 License
 
