@@ -12,8 +12,7 @@
   <a href="#-features">Features</a> •
   <a href="#-installation">Installation</a> •
   <a href="#-quick-start">Quick Start</a> •
-  <a href="#-packages">Packages</a> •
-  <a href="#-roadmap">Roadmap</a>
+  <a href="#-packages">Packages</a>
 </p>
 
 ---
@@ -82,7 +81,32 @@ npm install @open-motion/core @open-motion/components
 
 ## 🚀 Quick Start
 
-### 1. Create a Composition
+### Installation
+
+```bash
+# Install CLI tools globally
+pnpm install -g @open-motion/cli @open-motion/renderer
+```
+
+### Create & Run Your First Project
+
+```bash
+# Create a new project
+open-motion init fun-video
+cd fun-video && pnpm install
+
+# Start development server
+pnpm run dev
+
+# In another terminal, render to video
+# Note: Check the port number in the dev server output (e.g., 5173, 5177, etc.)
+open-motion render -u http://localhost:5173 -o out.mp4 --duration 420
+
+# Or render to GIF
+open-motion render -u http://localhost:5173 -o out.gif --duration 420
+```
+
+### Create a Composition
 
 ```tsx
 import { Composition, useCurrentFrame, interpolate } from "@open-motion/core";
@@ -100,21 +124,7 @@ const MyScene = () => {
 };
 ```
 
-### 2. Render to Video or GIF
-
-```bash
-# Start your dev server
-npm run dev
-
-# Render to MP4 video (default)
-npx open-motion render -u http://localhost:5173 -o output.mp4
-
-# Render to GIF (automatically detected from file extension)
-npx open-motion render -u http://localhost:5173 -o output.gif
-
-# Or manually specify format
-npx open-motion render -u http://localhost:5173 -o output.mp4 --format gif
-```
+**Note about ports**: If port 5173 is already in use, Vite will automatically try 5174, 5175, etc. Check the dev server output for the actual port number (e.g., "Local: http://localhost:5177/").
 
 ## 📖 Features API
 
