@@ -99,14 +99,15 @@ open-motion init fun-video
 cd fun-video && pnpm install
 
 # Start development server
+# Run this in one terminal - it will show the port (e.g. 5173)
 pnpm run dev
 ```
 
-**Note**: Check the port number in the dev server output. If 5173 is in use, Vite will use 5174, 5177, etc.
+**Note**: Keep this terminal open. If port 5173 is in use, Vite will automatically try 5174, 5175, etc. Check the output for the actual port number.
 
 ### Render Your Video
 
-In another terminal, render your project:
+In another terminal, render your project using the port from above:
 
 ```bash
 # Render to MP4 (14 seconds at 30fps)
