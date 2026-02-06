@@ -40,6 +40,7 @@ OpenMotion is a high-performance, open-source alternative to Remotion. It allows
 - 📊 **Dynamic Metadata**: Calculate video dimensions, duration, and other properties dynamically based on input props.
 - 🎬 **GIF & Video Output**: Render to both MP4 video and GIF formats with automatic format detection.
 - 🛡️ **Pre-Flight Checks**: Built-in validation and helpful error messages for missing dependencies.
+- 🌍 **Custom Chromium Path**: Override the Chromium executable path using the `PLAYWRIGHT_CHROMIUM_EXECUTABLE_PATH` environment variable.
 
 ### Dynamic Metadata
 
