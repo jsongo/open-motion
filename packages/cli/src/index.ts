@@ -75,23 +75,43 @@ export default defineConfig({
     'src/main.tsx': `import React from 'react';
 import ReactDOM from 'react-dom/client';
 import { App } from './App.tsx';
+import { CompositionProvider, Composition, Player } from '@open-motion/core';
+
+const Root = () => {
+  const config = { width: 1280, height: 720, fps: 30, durationInFrames: 60 };
+  const isRendering = typeof (window as any).__OPEN_MOTION_FRAME__ === 'number';
+
+  if (isRendering) {
+    return (
+      <CompositionProvider config={config} frame={(window as any).__OPEN_MOTION_FRAME__}>
+        <App />
+      </CompositionProvider>
+    );
+  }
+
+  return (
+    <div style={{ padding: '20px' }}>
+      <Player component={App} config={config} />
+      <div style={{ display: 'none' }}>
+        <Composition id="main" component={App} {...config} />
+      </div>
+    </div>
+  );
+};
 
 ReactDOM.createRoot(document.getElementById('root')!).render(
   <React.StrictMode>
-    <App />
+    <Root />
   </React.StrictMode>
 );`,
     'src/App.tsx': `import React from 'react';
 import {
-  CompositionProvider,
   useCurrentFrame,
   useVideoConfig,
-  interpolate,
-  Composition,
-  Player
+  interpolate
 } from '@open-motion/core';
 
-const MyVideo = () => {
+export const App = () => {
   const frame = useCurrentFrame();
   const { width, height } = useVideoConfig();
   const opacity = interpolate(frame, [0, 30], [0, 1]);
@@ -109,28 +129,6 @@ const MyVideo = () => {
       opacity
     }}>
       Hello OpenMotion
-    </div>
-  );
-};
-
-export const App = () => {
-  const config = { width: 1280, height: 720, fps: 30, durationInFrames: 60 };
-  const isRendering = typeof (window as any).__OPEN_MOTION_FRAME__ === 'number';
-
-  if (isRendering) {
-    return (
-      <CompositionProvider config={config} frame={(window as any).__OPEN_MOTION_FRAME__}>
-        <MyVideo />
-      </CompositionProvider>
-    );
-  }
-
-  return (
-    <div style={{ padding: '20px' }}>
-      <Player component={MyVideo} config={config} />
-      <div style={{ display: 'none' }}>
-        <Composition id="main" component={MyVideo} {...config} />
-      </div>
     </div>
   );
 };`
