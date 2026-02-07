@@ -158,7 +158,11 @@ export const runRender = async (options: {
   concurrency?: number;
   publicDir?: string;
   format?: 'mp4' | 'gif' | 'webp' | 'webm' | 'auto';
+  chromiumPath?: string;
 }) => {
+  if (options.chromiumPath) {
+    process.env.PLAYWRIGHT_CHROMIUM_EXECUTABLE_PATH = options.chromiumPath;
+  }
   const tmpDir = path.join(process.cwd(), '.open-motion-tmp');
   const inputProps = options.props ? JSON.parse(options.props) : {};
   const startTime = Date.now();
@@ -369,6 +373,7 @@ export const main = () => {
     .option('--duration <number>', 'Override duration in frames', parseInt)
     .option('--public-dir <path>', 'Public directory path for static assets (default: "./public")')
     .option('--format <format>', 'Output format (mp4, webm, gif, webp, auto)', 'auto')
+    .option('--chromium-path <path>', 'Custom path to Chromium executable')
     .action(async (options) => {
       try {
         await runRender({
@@ -382,7 +387,8 @@ export const main = () => {
           fps: options.fps,
           duration: options.duration,
           publicDir: options.publicDir,
-          format: options.format
+          format: options.format,
+          chromiumPath: options.chromiumPath
         });
       } catch (err) {
         console.error('Render failed:', err);
