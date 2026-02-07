@@ -33,7 +33,7 @@ export const runInit = async (projectName: string) => {
         build: 'vite build',
         preview: 'vite preview',
         render: 'npm run build && (npx http-server dist -p 5173 > /dev/null 2>&1 & sleep 2 && open-motion render -u http://localhost:5173 --composition main -o ./out.mp4 --concurrency 4 && pkill -f http-server)',
-        'render:path': 'PLAYWRIGHT_CHROMIUM_EXECUTABLE_PATH="/root/.cache/ms-playwright/chromium-1187/chrome-linux/chrome" npm run render -- \$@'
+        'render:path': 'npm run build && (npx http-server dist -p 5173 > /dev/null 2>&1 & sleep 2 && PLAYWRIGHT_CHROMIUM_EXECUTABLE_PATH="/root/.cache/ms-playwright/chromium-1187/chrome-linux/chrome" open-motion render -u http://localhost:5173 --composition main -o ./out.mp4 --concurrency 4 && pkill -f http-server)'
       },
       dependencies: {
         'react': '^18.2.0',
