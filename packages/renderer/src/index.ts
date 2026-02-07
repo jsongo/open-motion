@@ -9,8 +9,8 @@ import { execSync } from 'child_process';
 export const checkBrowserInstallation = async (browserType: BrowserType): Promise<boolean> => {
   try {
     // Try to get the browser path - this will throw if not installed
-    const browserPath = browserType.executablePath();
-    return true;
+    const browserPath = process.env.PLAYWRIGHT_CHROMIUM_EXECUTABLE_PATH || browserType.executablePath();
+    return !!browserPath;
   } catch (error) {
     return false;
   }
@@ -81,7 +81,9 @@ export interface GetCompositionsOptions {
 
 export const getCompositions = async (url: string, options: GetCompositionsOptions = {}) => {
   const { inputProps = {} } = options;
-  const browser = await chromium.launch();
+  const browser = await chromium.launch({
+    executablePath: process.env.PLAYWRIGHT_CHROMIUM_EXECUTABLE_PATH || undefined,
+  });
   const page = await browser.newPage();
   await page.goto(url);
   await page.waitForLoadState('networkidle');
@@ -124,6 +126,7 @@ export const renderFrames = async ({ url, config, outputDir, compositionId, inpu
 
   const renderBatch = async (startFrame: number, endFrame: number, workerId: number) => {
     const browser = await chromium.launch({
+      executablePath: process.env.PLAYWRIGHT_CHROMIUM_EXECUTABLE_PATH || undefined,
       args: ['--disable-dev-shm-usage', '--disable-setuid-sandbox', '--no-sandbox']
     });
     const page = await browser.newPage({
