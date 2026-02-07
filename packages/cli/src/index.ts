@@ -32,8 +32,7 @@ export const runInit = async (projectName: string) => {
         dev: 'vite',
         build: 'vite build',
         preview: 'vite preview',
-        render: 'npm run build && (npx http-server dist -p 5173 > /dev/null 2>&1 & sleep 2 && open-motion render -u http://localhost:5173 --composition main -o ./out.mp4 --concurrency 4 && pkill -f http-server)',
-        'render:path': 'npm run build && (npx http-server dist -p 5173 > /dev/null 2>&1 & sleep 2 && PLAYWRIGHT_CHROMIUM_EXECUTABLE_PATH="/root/.cache/ms-playwright/chromium-1187/chrome-linux/chrome" open-motion render -u http://localhost:5173 --composition main -o ./out.mp4 --concurrency 4 && pkill -f http-server)'
+        render: 'npm run build && (npx http-server dist -p 5173 > /dev/null 2>&1 & sleep 2 && open-motion render -u http://localhost:5173 --composition main -o ./out.mp4 --concurrency 4 && pkill -f http-server)'
       },
       dependencies: {
         'react': '^18.2.0',
@@ -75,23 +74,43 @@ export default defineConfig({
     'src/main.tsx': `import React from 'react';
 import ReactDOM from 'react-dom/client';
 import { App } from './App.tsx';
+import { CompositionProvider, Composition, Player } from '@open-motion/core';
+
+const Root = () => {
+  const config = { width: 1280, height: 720, fps: 30, durationInFrames: 60 };
+  const isRendering = typeof (window as any).__OPEN_MOTION_FRAME__ === 'number';
+
+  if (isRendering) {
+    return (
+      <CompositionProvider config={config} frame={(window as any).__OPEN_MOTION_FRAME__}>
+        <App />
+      </CompositionProvider>
+    );
+  }
+
+  return (
+    <div style={{ padding: '20px' }}>
+      <Player component={App} config={config} />
+      <div style={{ display: 'none' }}>
+        <Composition id="main" component={App} {...config} />
+      </div>
+    </div>
+  );
+};
 
 ReactDOM.createRoot(document.getElementById('root')!).render(
   <React.StrictMode>
-    <App />
+    <Root />
   </React.StrictMode>
 );`,
     'src/App.tsx': `import React from 'react';
 import {
-  CompositionProvider,
   useCurrentFrame,
   useVideoConfig,
-  interpolate,
-  Composition,
-  Player
+  interpolate
 } from '@open-motion/core';
 
-const MyVideo = () => {
+export const App = () => {
   const frame = useCurrentFrame();
   const { width, height } = useVideoConfig();
   const opacity = interpolate(frame, [0, 30], [0, 1]);
@@ -109,28 +128,6 @@ const MyVideo = () => {
       opacity
     }}>
       Hello OpenMotion
-    </div>
-  );
-};
-
-export const App = () => {
-  const config = { width: 1280, height: 720, fps: 30, durationInFrames: 60 };
-  const isRendering = typeof (window as any).__OPEN_MOTION_FRAME__ === 'number';
-
-  if (isRendering) {
-    return (
-      <CompositionProvider config={config} frame={(window as any).__OPEN_MOTION_FRAME__}>
-        <MyVideo />
-      </CompositionProvider>
-    );
-  }
-
-  return (
-    <div style={{ padding: '20px' }}>
-      <Player component={MyVideo} config={config} />
-      <div style={{ display: 'none' }}>
-        <Composition id="main" component={MyVideo} {...config} />
-      </div>
     </div>
   );
 };`
