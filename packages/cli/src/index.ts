@@ -32,7 +32,7 @@ export const runInit = async (projectName: string) => {
         dev: 'vite',
         build: 'vite build',
         preview: 'vite preview',
-        render: 'npm run build && (npx http-server dist -p 5173 > /dev/null 2>&1 & sleep 2 && open-motion render -u http://localhost:5173 --composition main -o ./out.mp4 --concurrency 4 && pkill -f http-server)'
+        render: 'npm run build && (npx http-server dist -p 5173 -a 127.0.0.1 > /dev/null 2>&1 & sleep 2 && open-motion render -u http://127.0.0.1:5173 --composition main -o ./out.mp4 --concurrency 4 && pkill -f http-server)'
       },
       dependencies: {
         'react': '^18.2.0',
@@ -77,7 +77,7 @@ import { App } from './App.tsx';
 import { CompositionProvider, Composition, Player } from '@open-motion/core';
 
 const Root = () => {
-  const config = { width: 1280, height: 720, fps: 30, durationInFrames: 60 };
+  const config = { width: 1920, height: 1080, fps: 30, durationInFrames: 120 };
   const isRendering = typeof (window as any).__OPEN_MOTION_FRAME__ === 'number';
 
   if (isRendering) {
