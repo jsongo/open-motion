@@ -72,25 +72,33 @@ export interface RenderOptions {
   concurrency?: number;
   onProgress?: (frame: number) => void;
   publicDir?: string;
+  timeout?: number;
 }
 
 export interface GetCompositionsOptions {
   inputProps?: any;
   chromiumOptions?: any;
+  timeout?: number;
 }
 
 export const getCompositions = async (url: string, options: GetCompositionsOptions = {}) => {
-  const { inputProps = {} } = options;
+  const { inputProps = {}, timeout = 30000 } = options;
   const browser = await chromium.launch({
     executablePath: process.env.PLAYWRIGHT_CHROMIUM_EXECUTABLE_PATH || undefined,
   });
   const page = await browser.newPage();
+
+  if (timeout) {
+    page.setDefaultTimeout(timeout);
+    page.setDefaultNavigationTimeout(timeout);
+  }
+
   await page.goto(url);
   await page.waitForLoadState('networkidle');
 
   // Wait for React to mount and all compositions to register
   // We wait for the variable to exist AND for a small stabilization period
-  await page.waitForFunction(() => (window as any).__OPEN_MOTION_COMPOSITIONS__ !== undefined, { timeout: 10000 }).catch(() => {});
+  await page.waitForFunction(() => (window as any).__OPEN_MOTION_COMPOSITIONS__ !== undefined, { timeout }).catch(() => {});
   await page.evaluate(() => new Promise(resolve => setTimeout(resolve, 500)));
 
   const compositions = await page.evaluate(() => {
@@ -116,7 +124,7 @@ export const getCompositions = async (url: string, options: GetCompositionsOptio
   return processedCompositions;
 };
 
-export const renderFrames = async ({ url, config, outputDir, compositionId, inputProps = {}, concurrency = 1, publicDir, onProgress }: RenderOptions) => {
+export const renderFrames = async ({ url, config, outputDir, compositionId, inputProps = {}, concurrency = 1, publicDir, onProgress, timeout = 300000 }: RenderOptions) => {
   if (!fs.existsSync(outputDir)) {
     fs.mkdirSync(outputDir, { recursive: true });
   }
@@ -132,6 +140,11 @@ export const renderFrames = async ({ url, config, outputDir, compositionId, inpu
     const page = await browser.newPage({
       viewport: { width: config.width, height: config.height }
     });
+
+    if (timeout) {
+      page.setDefaultTimeout(timeout);
+      page.setDefaultNavigationTimeout(timeout);
+    }
 
     const workerAudioAssets: any[] = [];
     const videoCache = new Map<string, string>(); // Path to local resolved path
@@ -184,8 +197,12 @@ export const renderFrames = async ({ url, config, outputDir, compositionId, inpu
         const ready = (window as any).__OPEN_MOTION_READY__ === true;
         const delayCount = (window as any).__OPEN_MOTION_DELAY_RENDER_COUNT__ || 0;
         return ready && delayCount === 0;
-      }, { timeout: 120000 });  // Increased from 60s to 120s for complex scenes
-      await page.waitForLoadState('networkidle');
+      }, { timeout });
+
+      // Only wait for networkidle on the first frame to avoid hanging on persistent requests
+      if (i === startFrame) {
+        await page.waitForLoadState('networkidle');
+      }
 
       // Check for OffthreadVideo assets
       const videoAssets = await page.evaluate(() => (window as any).__OPEN_MOTION_VIDEO_ASSETS__ || []);
