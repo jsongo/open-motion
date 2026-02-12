@@ -5,6 +5,16 @@ import path from 'path';
 import fs from 'fs';
 import { Command } from 'commander';
 import cliProgress from 'cli-progress';
+import { execSync } from 'child_process';
+
+const getPackageManager = () => {
+  try {
+    execSync('pnpm -v', { stdio: 'ignore' });
+    return 'pnpm';
+  } catch (e) {
+    return 'npm';
+  }
+};
 
 export const runInit = async (projectName: string) => {
   const targetDir = path.join(process.cwd(), projectName);
@@ -13,7 +23,8 @@ export const runInit = async (projectName: string) => {
     process.exit(1);
   }
 
-  console.log(`Initializing OpenMotion project: ${projectName}...`);
+  const pm = getPackageManager();
+  console.log(`Initializing OpenMotion project: ${projectName} using ${pm}...`);
 
   // Basic template structure
   const dirs = ['', 'src'];
@@ -32,7 +43,7 @@ export const runInit = async (projectName: string) => {
         dev: 'vite',
         build: 'vite build',
         preview: 'vite preview',
-        render: 'npm run build && (npx http-server dist -p 5173 -a 127.0.0.1 > /dev/null 2>&1 & sleep 2 && open-motion render -u http://127.0.0.1:5173 --composition main -o ./out.mp4 --concurrency 4 && pkill -f http-server)'
+        render: `${pm} run build && (npx http-server dist -p 5173 -a 127.0.0.1 > /dev/null 2>&1 & sleep 2 && open-motion render -u http://127.0.0.1:5173 --composition main -o ./out.mp4 --concurrency 4 && pkill -f http-server)`
       },
       dependencies: {
         'react': '^18.2.0',
@@ -79,6 +90,12 @@ import { CompositionProvider, Composition, Player } from '@open-motion/core';
 const Root = () => {
   const config = { width: 1920, height: 1080, fps: 30, durationInFrames: 120 };
   const isRendering = typeof (window as any).__OPEN_MOTION_FRAME__ === 'number';
+
+  React.useEffect(() => {
+    if (isRendering) {
+      (window as any).__OPEN_MOTION_READY__ = true;
+    }
+  }, [isRendering]);
 
   if (isRendering) {
     return (
@@ -137,11 +154,11 @@ export const App = () => {
     fs.writeFileSync(path.join(targetDir, name), content);
   }
 
-  console.log(`Success! Project \${projectName} initialized.`);
+  console.log(`Success! Project ${projectName} initialized.`);
   console.log(`Next steps:`);
-  console.log(`  cd \${projectName}`);
-  console.log(`  npm install (or pnpm install)`);
-  console.log(`  npm run dev`);
+  console.log(`  cd ${projectName}`);
+  console.log(`  ${pm} install`);
+  console.log(`  ${pm} run dev`);
 };
 
 export const runRender = async (options: {
@@ -157,7 +174,10 @@ export const runRender = async (options: {
   publicDir?: string;
   format?: 'mp4' | 'gif' | 'webp' | 'webm' | 'auto';
   chromiumPath?: string;
+  timeout?: number;
 }) => {
+  const timeout = options.timeout || parseInt(process.env.OPEN_MOTION_RENDER_TIMEOUT || '300000', 10);
+
   if (options.chromiumPath) {
     process.env.PLAYWRIGHT_CHROMIUM_EXECUTABLE_PATH = options.chromiumPath;
   }
@@ -187,7 +207,7 @@ export const runRender = async (options: {
   if (options.compositionId) {
     // If ID is provided, we can skip the heavy discovery if we want,
     // but for now let's just make it non-fatal if discovery fails but ID is present
-    const compositions = await getCompositions(options.url, { inputProps }).catch(() => []);
+    const compositions = await getCompositions(options.url, { inputProps, timeout }).catch(() => []);
     selectedComp = compositions.find((c: any) => c.id === options.compositionId);
 
     if (!selectedComp) {
@@ -201,7 +221,7 @@ export const runRender = async (options: {
       };
     }
   } else {
-    const compositions = await getCompositions(options.url, { inputProps });
+    const compositions = await getCompositions(options.url, { inputProps, timeout });
     if (compositions.length === 0) {
       console.error('No compositions found in the provided URL.');
       process.exit(1);
@@ -234,7 +254,8 @@ export const runRender = async (options: {
     inputProps,
     concurrency: options.concurrency || 1,
     publicDir: options.publicDir ? path.join(process.cwd(), options.publicDir) : undefined,
-    onProgress: (frame) => renderBar.update(frame)
+    onProgress: (frame) => renderBar.update(frame),
+    timeout
   });
 
   renderBar.update(config.durationInFrames);
@@ -372,6 +393,7 @@ export const main = () => {
     .option('--public-dir <path>', 'Public directory path for static assets (default: "./public")')
     .option('--format <format>', 'Output format (mp4, webm, gif, webp, auto)', 'auto')
     .option('--chromium-path <path>', 'Custom path to Chromium executable')
+    .option('--timeout <number>', 'Timeout for browser operations in milliseconds', parseInt)
     .action(async (options) => {
       try {
         await runRender({
@@ -386,7 +408,8 @@ export const main = () => {
           duration: options.duration,
           publicDir: options.publicDir,
           format: options.format,
-          chromiumPath: options.chromiumPath
+          chromiumPath: options.chromiumPath,
+          timeout: options.timeout
         });
       } catch (err) {
         console.error('Render failed:', err);
