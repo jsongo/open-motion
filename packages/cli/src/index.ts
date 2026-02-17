@@ -364,7 +364,19 @@ export const main = () => {
   program
     .name('open-motion')
     .description('CLI for OpenMotion')
-    .version(pkg.version);
+    .version(pkg.version)
+    .addHelpText('after', `
+Quick Start:
+  1. Initialize project:  $ open-motion init my-video
+  2. Enter directory:     $ cd my-video
+  3. Install deps:        $ pnpm install
+  4. Start dev server:    $ pnpm dev
+  5. Render video:        $ pnpm render
+
+Example Usage:
+  $ open-motion init my-project
+  $ open-motion render -u http://localhost:5173 -o output.mp4 --composition main
+`);
 
   program
     .command('init <name>')
@@ -378,7 +390,7 @@ export const main = () => {
       }
     });
 
-  program
+  const renderCommand = program
     .command('render')
     .description('Render a video')
     .requiredOption('-u, --url <url>', 'URL of the OpenMotion app')
@@ -416,6 +428,13 @@ export const main = () => {
         process.exit(1);
       }
     });
+
+  renderCommand.addHelpText('after', `
+Examples:
+  $ open-motion render -u http://localhost:5173 -o out.mp4
+  $ open-motion render -u http://localhost:5173 -o out.mp4 --composition main --concurrency 4
+  $ open-motion render -u http://localhost:3000 -o banner.gif --format gif --width 1200 --height 630
+`);
 
   program.parse(process.argv);
 };
