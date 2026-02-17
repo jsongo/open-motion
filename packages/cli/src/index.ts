@@ -43,7 +43,7 @@ export const runInit = async (projectName: string) => {
         dev: 'vite',
         build: 'vite build',
         preview: 'vite preview',
-        render: `${pm} run build && (npx http-server dist -p 5173 -a 127.0.0.1 > /dev/null 2>&1 & sleep 2 && open-motion render -u http://127.0.0.1:5173 --composition main -o ./out.mp4 --concurrency 4 && pkill -f http-server)`
+        render: `${pm} run build && npx http-server dist -p 5173 -a 127.0.0.1 > /dev/null 2>&1 & sleep 2 && open-motion render -u http://127.0.0.1:5173 --composition main -o ./out.mp4 --concurrency 4; pkill -f http-server`
       },
       dependencies: {
         'react': '^18.2.0',
