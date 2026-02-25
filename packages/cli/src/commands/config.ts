@@ -60,13 +60,13 @@ export function runConfigSet(key: string, value: string): void {
   setConfigKey(key, value);
   const displayVal = maskSecret(key, value);
   console.log(chalk.green(`✓ ${key} = ${displayVal}`));
-  console.log(chalk.dim(`  保存先: ${CONFIG_FILE}`));
+  console.log(chalk.dim(`  Saved to: ${CONFIG_FILE}`));
 }
 
 export function runConfigGet(key: string): void {
   const value = getConfigKey(key);
   if (value === undefined) {
-    console.log(chalk.yellow(`  "${key}" は設定されていません`));
+    console.log(chalk.yellow(`  "${key}" is not set`));
   } else {
     console.log(`${key} = ${maskSecret(key, value)}`);
   }
@@ -77,16 +77,16 @@ export function runConfigList(): void {
   const pairs = flattenConfig(config);
 
   if (pairs.length === 0) {
-    console.log(chalk.dim('設定がありません'));
-    console.log(chalk.dim(`設定ファイル: ${CONFIG_FILE}`));
+    console.log(chalk.dim('No configuration found'));
+    console.log(chalk.dim(`Config file: ${CONFIG_FILE}`));
     console.log('');
-    console.log('例:');
+    console.log('Example:');
     console.log(chalk.cyan('  open-motion config set provider openai'));
     console.log(chalk.cyan('  open-motion config set openai.apiKey sk-...'));
     return;
   }
 
-  console.log(chalk.bold(`設定ファイル: ${CONFIG_FILE}`));
+  console.log(chalk.bold(`Config file: ${CONFIG_FILE}`));
   console.log('');
 
   for (const [key, value] of pairs) {
@@ -102,21 +102,21 @@ export function runConfigList(): void {
 export function printConfigHelp(): void {
   console.log(chalk.bold('open-motion config'));
   console.log('');
-  console.log('使用可能なコマンド:');
+  console.log('Available commands:');
   console.log(
-    `  ${chalk.cyan('open-motion config set <key> <value>')}  設定値を保存`
+    `  ${chalk.cyan('open-motion config set <key> <value>')}  Save a configuration value`
   );
   console.log(
-    `  ${chalk.cyan('open-motion config get <key>')}          設定値を表示`
+    `  ${chalk.cyan('open-motion config get <key>')}          Show a configuration value`
   );
   console.log(
-    `  ${chalk.cyan('open-motion config list')}               全設定を一覧表示`
+    `  ${chalk.cyan('open-motion config list')}               List all configuration values`
   );
   console.log('');
-  console.log('設定可能なキー:');
+  console.log('Configurable keys:');
   VALID_KEYS.forEach((k) => console.log(`  ${chalk.dim(k)}`));
   console.log('');
-  console.log('例:');
+  console.log('Example:');
   console.log(chalk.cyan('  open-motion config set provider anthropic'));
   console.log(chalk.cyan('  open-motion config set anthropic.apiKey sk-ant-...'));
   console.log(chalk.cyan('  open-motion config set openai-compatible.baseURL https://api.example.com/v1'));

@@ -74,11 +74,11 @@ function printDiff(oldContent: string, newContent: string, filePath: string): vo
   );
 
   if (oldContent === newContent) {
-    console.log(chalk.yellow('\n  (変更なし)'));
+    console.log(chalk.yellow('\n  (no changes)'));
     return;
   }
 
-  console.log('\n' + chalk.bold('--- 変更内容 ---'));
+  console.log('\n' + chalk.bold('--- Changes ---'));
   hunks.split('\n').forEach((line) => {
     if (line.startsWith('+++') || line.startsWith('---')) {
       console.log(chalk.bold(line));
@@ -200,7 +200,7 @@ export async function runEdit(
   const lineCount = fs.readFileSync(absPath, 'utf8').split('\n').length;
 
   console.log(chalk.bold('\nopen-motion edit'));
-  console.log(chalk.dim(`ファイル : ${relPath} (${lineCount}行)`));
+  console.log(chalk.dim(`File     : ${relPath} (${lineCount} lines)`));
   console.log(chalk.dim(`Provider : ${resolvedCfg.provider}  Model: ${resolvedCfg.model}`));
   console.log('');
 
@@ -221,7 +221,7 @@ export async function runEdit(
     terminal: true,
   });
 
-  console.log(chalk.dim("指示を入力してください ('exit' で終了)\n"));
+  console.log(chalk.dim("Enter an instruction (type 'exit' to quit)\n"));
 
   // Keep previous instruction for retry
   let lastInstruction = '';
@@ -236,14 +236,14 @@ export async function runEdit(
     }
 
     if (instruction.toLowerCase() === 'exit' || instruction.toLowerCase() === 'quit') {
-      console.log(chalk.dim('終了しました。'));
+      console.log(chalk.dim('Exited.'));
       rl.close();
       return;
     }
 
     const effectiveInstruction = instruction !== '' ? instruction : lastInstruction;
     if (!effectiveInstruction) {
-      console.log(chalk.yellow('指示を入力してください。'));
+      console.log(chalk.yellow('Please enter an instruction.'));
       continue;
     }
 
@@ -253,61 +253,61 @@ export async function runEdit(
     const currentContent = fs.readFileSync(absPath, 'utf8');
 
     const spinner = new Spinner();
-    spinner.start('編集中...');
+    spinner.start('Editing...');
 
     let edited: string;
     try {
       edited = await applyEdit(model, currentContent, effectiveInstruction);
     } catch (err) {
-      spinner.fail('編集に失敗しました');
+      spinner.fail('Edit failed');
       console.error(chalk.red((err as Error).message));
       continue;
     }
 
-    spinner.succeed('編集完了');
+    spinner.succeed('Edit complete');
     lastEditedContent = edited;
 
     printDiff(currentContent, edited, absPath);
 
     if (currentContent === edited) {
-      console.log(chalk.yellow('\n変更がありませんでした。指示を具体的にしてみてください。\n'));
+      console.log(chalk.yellow('\nNo changes were made. Try a more specific instruction.\n'));
       continue;
     }
 
     const answer = await askConfirm(
       rl,
-      chalk.bold('\n変更を適用しますか？') + chalk.dim(' (Y/n/retry) ')
+      chalk.bold('\nApply changes?') + chalk.dim(' (Y/n/retry) ')
     );
 
     if (answer === 'yes') {
       fs.writeFileSync(absPath, edited, 'utf8');
-      console.log(chalk.green('\n保存しました!\n'));
+      console.log(chalk.green('\nSaved!\n'));
     } else if (answer === 'retry') {
-      console.log(chalk.dim('\n再生成します...\n'));
+      console.log(chalk.dim('\nRegenerating...\n'));
       const spinner2 = new Spinner();
-      spinner2.start('再生成中...');
+      spinner2.start('Regenerating...');
       try {
         edited = await applyEdit(model, currentContent, effectiveInstruction);
-        spinner2.succeed('再生成完了');
+        spinner2.succeed('Regeneration complete');
         lastEditedContent = edited;
         printDiff(currentContent, edited, absPath);
 
         const ans2 = await askConfirm(
           rl,
-          chalk.bold('\n変更を適用しますか？') + chalk.dim(' (Y/n) ')
+          chalk.bold('\nApply changes?') + chalk.dim(' (Y/n) ')
         );
         if (ans2 === 'yes') {
           fs.writeFileSync(absPath, edited, 'utf8');
-          console.log(chalk.green('\n保存しました!\n'));
+          console.log(chalk.green('\nSaved!\n'));
         } else {
-          console.log(chalk.dim('\nスキップしました。\n'));
+          console.log(chalk.dim('\nSkipped.\n'));
         }
       } catch (err) {
-        spinner2.fail('再生成に失敗しました');
+        spinner2.fail('Regeneration failed');
         console.error(chalk.red((err as Error).message));
       }
     } else {
-      console.log(chalk.dim('\nスキップしました。\n'));
+      console.log(chalk.dim('\nSkipped.\n'));
     }
   }
 }
@@ -326,28 +326,28 @@ async function runOneShot(
   const currentContent = fs.readFileSync(absPath, 'utf8');
 
   const spinner = new Spinner();
-  spinner.start('編集中...');
+  spinner.start('Editing...');
 
   let edited: string;
   try {
     edited = await applyEdit(model, currentContent, instruction);
   } catch (err) {
-    spinner.fail('編集に失敗しました');
+    spinner.fail('Edit failed');
     console.error(chalk.red((err as Error).message));
     process.exit(1);
   }
 
-  spinner.succeed('編集完了');
+  spinner.succeed('Edit complete');
   printDiff(currentContent, edited, absPath);
 
   if (currentContent === edited) {
-    console.log(chalk.yellow('変更がありませんでした。'));
+    console.log(chalk.yellow('No changes were made.'));
     return;
   }
 
   if (autoApply) {
     fs.writeFileSync(absPath, edited, 'utf8');
-    console.log(chalk.green('\n保存しました!'));
+    console.log(chalk.green('\nSaved!'));
     return;
   }
 
@@ -360,14 +360,14 @@ async function runOneShot(
 
   const answer = await askConfirm(
     rl,
-    chalk.bold('\n変更を適用しますか？') + chalk.dim(' (Y/n) ')
+    chalk.bold('\nApply changes?') + chalk.dim(' (Y/n) ')
   );
   rl.close();
 
   if (answer === 'yes') {
     fs.writeFileSync(absPath, edited, 'utf8');
-    console.log(chalk.green('\n保存しました!'));
+    console.log(chalk.green('\nSaved!'));
   } else {
-    console.log(chalk.dim('\nキャンセルしました。'));
+    console.log(chalk.dim('\nCancelled.'));
   }
 }

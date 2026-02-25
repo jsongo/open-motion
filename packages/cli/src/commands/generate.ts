@@ -266,7 +266,7 @@ export async function runGenerate(
   // 2. Plan scenes
   // ------------------------------------------------------------------
   const spinner = new Spinner();
-  spinner.start('[1/3] シーン構成を検討中...');
+  spinner.start('[1/3] Planning scene structure...');
 
   let plan: ScenePlan;
   try {
@@ -278,7 +278,7 @@ export async function runGenerate(
     });
     plan = parsePlanResponse(text);
   } catch (err) {
-    spinner.fail('シーン構成の生成に失敗しました');
+    spinner.fail('Failed to generate scene structure');
     console.error(chalk.red((err as Error).message));
     process.exit(1);
   }
@@ -294,7 +294,7 @@ export async function runGenerate(
     );
   }
 
-  spinner.succeed(`[1/3] シーン構成: ${plan.scenes.length}シーン`);
+  spinner.succeed(`[1/3] Scene structure: ${plan.scenes.length} scene(s)`);
   plan.scenes.forEach((s, i) => {
     console.log(
       chalk.dim(`       Scene ${i + 1}: ${s.title} (${s.durationInSeconds}s)`)
@@ -305,7 +305,7 @@ export async function runGenerate(
   // ------------------------------------------------------------------
   // 3. Generate TSX for each scene
   // ------------------------------------------------------------------
-  spinner.start(`[2/3] TSXを生成中... (0/${plan.scenes.length})`);
+  spinner.start(`[2/3] Generating TSX... (0/${plan.scenes.length})`);
 
   const scenesDir = path.join(outputDir);
   fs.mkdirSync(scenesDir, { recursive: true });
@@ -314,7 +314,7 @@ export async function runGenerate(
 
   for (let i = 0; i < plan.scenes.length; i++) {
     const scene = plan.scenes[i];
-    spinner.update(`[2/3] TSXを生成中... (${i + 1}/${plan.scenes.length}) — ${scene.title}`);
+    spinner.update(`[2/3] Generating TSX... (${i + 1}/${plan.scenes.length}) — ${scene.title}`);
 
     const durationInFrames = Math.round(scene.durationInSeconds * fps);
 
@@ -342,19 +342,19 @@ export async function runGenerate(
       fs.writeFileSync(filePath, code + '\n', 'utf8');
       generatedFiles.push(filePath);
     } catch (err) {
-      spinner.fail(`Scene "${scene.title}" の生成に失敗しました`);
+      spinner.fail(`Failed to generate scene "${scene.title}"`);
       console.error(chalk.red((err as Error).message));
       process.exit(1);
     }
   }
 
-  spinner.succeed(`[2/3] TSX生成完了 (${plan.scenes.length}シーン)`);
+  spinner.succeed(`[2/3] TSX generation complete (${plan.scenes.length} scene(s))`);
   console.log('');
 
   // ------------------------------------------------------------------
   // 4. Generate composition wrapper
   // ------------------------------------------------------------------
-  spinner.start('[3/3] コンポジションファイルを生成中...');
+  spinner.start('[3/3] Generating composition file...');
 
   const compositionCode = buildCompositionFile(plan.videoTitle, plan, fps, width, height);
   const compositionComponentName = toPascalCase(plan.videoTitle) + 'Video';
@@ -383,34 +383,34 @@ export async function runGenerate(
   });
 
   const updatedMainTsx = fs.existsSync(mainTsxPath);
-  spinner.succeed('[3/3] コンポジション生成完了');
+  spinner.succeed('[3/3] Composition generation complete');
   console.log('');
 
   // ------------------------------------------------------------------
   // 5. Summary
   // ------------------------------------------------------------------
-  console.log(chalk.bold.green('完了!'));
+  console.log(chalk.bold.green('Done!'));
   console.log('');
-  console.log(chalk.bold('生成されたファイル:'));
+  console.log(chalk.bold('Generated files:'));
   generatedFiles.forEach((f) => {
     const rel = path.relative(process.cwd(), f);
     console.log(chalk.green('  ✓') + '  ' + rel);
   });
   const relComp = path.relative(process.cwd(), compositionFilePath);
-  console.log(chalk.green('  ✓') + '  ' + relComp + chalk.dim('  (コンポジション)'));
+  console.log(chalk.green('  ✓') + '  ' + relComp + chalk.dim('  (composition)'));
   if (updatedMainTsx) {
     const relMain = path.relative(process.cwd(), mainTsxPath);
-    console.log(chalk.green('  ✓') + '  ' + relMain + chalk.dim('  (Composition を追記)'));
+    console.log(chalk.green('  ✓') + '  ' + relMain + chalk.dim('  (Composition appended)'));
   }
   console.log('');
   console.log(
     chalk.dim(
-      `合計: ${plan.scenes.length}シーン, ${totalFrames}フレーム ` +
-      `(${(totalFrames / fps).toFixed(1)}秒 @ ${fps}fps)`
+      `Total: ${plan.scenes.length} scene(s), ${totalFrames} frame(s) ` +
+      `(${(totalFrames / fps).toFixed(1)}s @ ${fps}fps)`
     )
   );
   console.log('');
-  console.log('次のステップ:');
-  console.log(chalk.cyan('  pnpm dev') + '  でプレビュー');
-  console.log(chalk.cyan('  pnpm render') + '  で動画をレンダリング');
+  console.log('Next steps:');
+  console.log(chalk.cyan('  pnpm dev') + '  to preview');
+  console.log(chalk.cyan('  pnpm render') + '  to render the video');
 }
