@@ -116,37 +116,43 @@ export function resolveConfig(overrides: CliConfigOverrides = {}): ResolvedLLMCo
       apiKey =
         overrides.apiKey ||
         env('OPENAI_API_KEY') ||
-        file.openai?.apiKey;
+        file.openai?.apiKey ||
+        (file.openai as any)?.apikey;
       break;
     case 'anthropic':
       apiKey =
         overrides.apiKey ||
         env('ANTHROPIC_API_KEY') ||
-        file.anthropic?.apiKey;
+        file.anthropic?.apiKey ||
+        (file.anthropic as any)?.apikey;
       break;
     case 'google':
       apiKey =
         overrides.apiKey ||
         env('GOOGLE_API_KEY') ||
         env('GEMINI_API_KEY') ||
-        file.google?.apiKey;
+        file.google?.apiKey ||
+        (file.google as any)?.apikey;
       break;
     case 'ollama':
       baseURL =
         overrides.baseURL ||
         env('OPEN_MOTION_BASE_URL') ||
         file.ollama?.baseURL ||
+        (file.ollama as any)?.baseUrl ||
         'http://localhost:11434';
       break;
     case 'openai-compatible':
       apiKey =
         overrides.apiKey ||
         env('OPEN_MOTION_API_KEY') ||
-        file['openai-compatible']?.apiKey;
+        file['openai-compatible']?.apiKey ||
+        (file['openai-compatible'] as any)?.apikey;
       baseURL =
         overrides.baseURL ||
         env('OPEN_MOTION_BASE_URL') ||
-        file['openai-compatible']?.baseURL;
+        file['openai-compatible']?.baseURL ||
+        (file['openai-compatible'] as any)?.baseUrl;
       break;
   }
 

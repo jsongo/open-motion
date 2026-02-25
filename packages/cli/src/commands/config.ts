@@ -57,18 +57,24 @@ function flattenConfig(obj: any, prefix = ''): Array<[string, string]> {
 // ---------------------------------------------------------------------------
 
 export function runConfigSet(key: string, value: string): void {
-  setConfigKey(key, value);
-  const displayVal = maskSecret(key, value);
-  console.log(chalk.green(`✓ ${key} = ${displayVal}`));
+  // Normalize key to canonical case if it matches a valid key case-insensitively
+  const canonicalKey = VALID_KEYS.find(vk => vk.toLowerCase() === key.toLowerCase());
+  const finalKey = canonicalKey || key;
+
+  setConfigKey(finalKey, value);
+  const displayVal = maskSecret(finalKey, value);
+  console.log(chalk.green(`✓ ${finalKey} = ${displayVal}`));
   console.log(chalk.dim(`  Saved to: ${CONFIG_FILE}`));
 }
 
 export function runConfigGet(key: string): void {
-  const value = getConfigKey(key);
+  const canonicalKey = VALID_KEYS.find(vk => vk.toLowerCase() === key.toLowerCase());
+  const finalKey = canonicalKey || key;
+  const value = getConfigKey(finalKey);
   if (value === undefined) {
-    console.log(chalk.yellow(`  "${key}" is not set`));
+    console.log(chalk.yellow(`  "${finalKey}" is not set`));
   } else {
-    console.log(`${key} = ${maskSecret(key, value)}`);
+    console.log(`${finalKey} = ${maskSecret(finalKey, value)}`);
   }
 }
 
