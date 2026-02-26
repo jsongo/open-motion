@@ -1,5 +1,6 @@
 import fs from 'fs';
 import path from 'path';
+import readline from 'readline';
 import { generateText } from 'ai';
 import chalk from 'chalk';
 import { resolveConfig, validateConfig, type CliConfigOverrides } from '../llm/config';
@@ -88,6 +89,71 @@ function toPascalCase(str: string): string {
         : word
     )
     .join('');
+}
+
+/**
+ * Check if the directory is initialized with open-motion init.
+ */
+function isInitialized(cwd: string): boolean {
+  const pkgPath = path.join(cwd, 'package.json');
+  if (!fs.existsSync(pkgPath)) return false;
+  try {
+    const pkg = JSON.parse(fs.readFileSync(pkgPath, 'utf8'));
+    return !!(pkg.dependencies && pkg.dependencies['@open-motion/core']);
+  } catch (e) {
+    return false;
+  }
+}
+
+/**
+ * Check for files not created by "open-motion init".
+ */
+function getUnexpectedFiles(cwd: string): string[] {
+  const initialFiles = new Set([
+    '.npmrc',
+    'package.json',
+    'index.html',
+    'vite.config.ts',
+    'src/main.tsx',
+    'src/App.tsx',
+  ]);
+
+  const allowedExtras = new Set([
+    'node_modules',
+    'pnpm-lock.yaml',
+    'package-lock.json',
+    'yarn.lock',
+    '.git',
+    '.gitignore',
+    'dist',
+    '.open-motion-tmp',
+    '.DS_Store',
+  ]);
+
+  const unexpected: string[] = [];
+  if (!fs.existsSync(cwd)) return [];
+
+  const files = fs.readdirSync(cwd);
+  for (const f of files) {
+    if (initialFiles.has(f) || allowedExtras.has(f)) continue;
+    if (f === 'src') {
+      if (fs.statSync(path.join(cwd, f)).isDirectory()) {
+        const srcFiles = fs.readdirSync(path.join(cwd, 'src'));
+        for (const sf of srcFiles) {
+          const relSf = path.join('src', sf);
+          if (!initialFiles.has(relSf)) {
+            unexpected.push(relSf);
+          }
+        }
+      } else {
+        unexpected.push(f);
+      }
+      continue;
+    }
+    unexpected.push(f);
+  }
+
+  return unexpected;
 }
 
 /**
@@ -217,6 +283,48 @@ export async function runGenerate(
   description: string,
   options: GenerateOptions
 ): Promise<void> {
+  // ------------------------------------------------------------------
+  // 0. Environment check
+  // ------------------------------------------------------------------
+  const initialized = isInitialized(process.cwd());
+  const unexpectedFiles = getUnexpectedFiles(process.cwd());
+
+  if (!initialized || unexpectedFiles.length > 0) {
+    console.log(chalk.yellow('\n⚠️  Warning: Existing files may be overwritten.'));
+    if (!initialized) {
+      console.log(
+        chalk.yellow(
+          'This directory does not appear to be an OpenMotion project (run "open-motion init" first).'
+        )
+      );
+    } else {
+      console.log(
+        chalk.yellow('This directory contains files not created by "open-motion init".')
+      );
+    }
+    console.log('');
+
+    const rl = readline.createInterface({
+      input: process.stdin,
+      output: process.stdout,
+    });
+
+    const answer = await new Promise<string>((resolve) => {
+      rl.question(
+        chalk.bold('Do you want to continue? ') + chalk.dim('(y/N) '),
+        (a) => {
+          resolve(a.trim().toLowerCase());
+        }
+      );
+    });
+    rl.close();
+
+    if (answer !== 'y' && answer !== 'yes') {
+      console.log(chalk.dim('\nAborted.'));
+      return;
+    }
+  }
+
   const fps = options.fps ?? 30;
   const width = options.width ?? 1280;
   const height = options.height ?? 720;
