@@ -1,6 +1,7 @@
 import fs from 'fs';
 import path from 'path';
 import readline from 'readline';
+import { execSync } from 'child_process';
 import { generateText } from 'ai';
 import chalk from 'chalk';
 import { resolveConfig, validateConfig, type CliConfigOverrides } from '../llm/config';
@@ -72,6 +73,19 @@ class Spinner {
       this.timer = null;
     }
   }
+}
+
+function getPackageManager(): 'pnpm' | 'npm' {
+  try {
+    execSync('pnpm -v', { stdio: 'ignore' });
+    return 'pnpm';
+  } catch {
+    return 'npm';
+  }
+}
+
+function formatRun(pm: 'pnpm' | 'npm', script: string): string {
+  return pm === 'npm' ? `npm run ${script}` : `pnpm ${script}`;
 }
 
 /**
@@ -519,6 +533,7 @@ export async function runGenerate(
   );
   console.log('');
   console.log('Next steps:');
-  console.log(chalk.cyan('  pnpm dev') + '  to preview');
-  console.log(chalk.cyan('  pnpm render') + '  to render the video');
+  const pm = getPackageManager();
+  console.log(chalk.cyan(`  ${formatRun(pm, 'dev')}`) + '  to preview');
+  console.log(chalk.cyan(`  ${formatRun(pm, 'render')}`) + '  to render the video');
 }

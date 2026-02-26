@@ -19,6 +19,10 @@ const getPackageManager = () => {
   }
 };
 
+const formatRun = (pm: string, script: string) => {
+  return pm === 'npm' ? `npm run ${script}` : `${pm} ${script}`;
+};
+
 export const runInit = async (projectName: string) => {
   const targetDir = path.join(process.cwd(), projectName);
   if (fs.existsSync(targetDir)) {
@@ -364,6 +368,7 @@ const pkg = JSON.parse(fs.readFileSync(path.join(__dirname, '../package.json'), 
 
 export const main = () => {
   const program = new Command();
+  const pm = getPackageManager();
 
   program
     .name('open-motion')
@@ -373,13 +378,13 @@ export const main = () => {
 Quick Start:
   1. Initialize project:  $ open-motion init my-video
   2. Enter directory:     $ cd my-video
-  3. Install deps:        $ pnpm install
+  3. Install deps:        $ ${pm} install
   4. Configure LLM:       $ open-motion config set provider openai
                           $ open-motion config set openai.apiKey sk-...
   5. Generate scenes:     $ open-motion generate "A video explaining the React lifecycle"
   6. Edit a scene:        $ open-motion edit src/scenes/IntroScene.tsx
-  7. Start dev server:    $ pnpm dev
-  8. Render video:        $ pnpm render
+  7. Start dev server:    $ ${formatRun(pm, 'dev')}
+  8. Render video:        $ ${formatRun(pm, 'render')}
 
 Example Usage:
   $ open-motion init my-project

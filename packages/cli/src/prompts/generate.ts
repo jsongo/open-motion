@@ -36,6 +36,12 @@ setTimeout, setInterval, or any real-time mechanism for animation.
 6. The component must be **completely self-contained** with no props required
 7. Use visually appealing designs: thoughtful colors, smooth animations, readable typography
 
+## Naming rules (critical)
+- Any exported component name MUST be a valid TypeScript/JavaScript identifier in PascalCase.
+- The name MUST start with a letter A-Z (do not start with a digit).
+- Use ASCII letters and digits only for identifiers (A-Z, a-z, 0-9). Do NOT use Japanese text, spaces, hyphens, emoji, or punctuation in identifiers.
+- If the title is non-Latin (e.g. Japanese), romanize/translate it for the identifier (e.g. "30秒でわかるRemotion" -> "RemotionIn30Seconds").
+
 ## Minimal valid example
 \`\`\`tsx
 import React from 'react';
@@ -97,7 +103,10 @@ Respond with a JSON object (and nothing else) in this exact shape:
 Guidelines:
 - Total video duration should feel natural for the content (typically 20-90 seconds)
 - Each scene should be self-contained and visually distinct
-- \`componentName\` must be a valid PascalCase React component name (e.g. "IntroScene", "DataFlowScene")
+- \`componentName\` must be a valid PascalCase React component name AND a valid JS/TS identifier:
+  - start with A-Z (never start with a number)
+  - ASCII letters/digits only (no Japanese/non-ASCII characters, no spaces, no hyphens)
+  - examples: "IntroScene", "HowItWorksScene", "RemotionIn30SecondsScene"
 - \`id\` must be unique kebab-case (e.g. "intro-scene", "data-flow-scene")
 - Aim for 3-6 scenes unless the content clearly needs more or fewer
 - Describe animations concretely (e.g. "text fades in from bottom, then a line draws across")
@@ -135,6 +144,7 @@ ${ctx.description}
 
 Requirements:
 - The component must be named exactly \`${ctx.componentName}\` and exported as a named export
+- The component name must be a valid JS/TS identifier (ASCII PascalCase, must not start with a digit)
 - Fill the full ${ctx.width}x${ctx.height} canvas
 - Use smooth frame-based animations (interpolate / spring)
 - Keep text readable and well-positioned
