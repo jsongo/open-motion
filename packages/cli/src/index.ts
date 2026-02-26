@@ -93,33 +93,161 @@ export default defineConfig({
     'src/main.tsx': `import React from 'react';
 import ReactDOM from 'react-dom/client';
 import { App } from './App.tsx';
-import { CompositionProvider, Composition, Player } from '@open-motion/core';
+import {
+  CompositionProvider,
+  Composition,
+  Player,
+  getCompositions,
+  getCompositionById,
+  type VideoConfig,
+} from '@open-motion/core';
 
-const Root = () => {
-  const config = { width: 1920, height: 1080, fps: 30, durationInFrames: 120 };
-  const isRendering = typeof (window as any).__OPEN_MOTION_FRAME__ === 'number';
+const STORAGE_KEY = 'open-motion:preview:compositionId';
+
+const RegisterCompositions = () => {
+  const mainConfig: VideoConfig = {
+    width: 1920,
+    height: 1080,
+    fps: 30,
+    durationInFrames: 120,
+  };
+
+  return (
+    <div style={{ display: 'none' }}>
+      <Composition id="main" component={App} {...mainConfig} />
+    </div>
+  );
+};
+
+const pickInitialCompositionId = (ids: string[]) => {
+  if (typeof window === 'undefined') return ids[0] ?? 'main';
+
+  const url = new URL(window.location.href);
+  const fromQuery = url.searchParams.get('comp');
+  if (fromQuery && ids.includes(fromQuery)) return fromQuery;
+
+  const fromStorage = window.localStorage.getItem(STORAGE_KEY);
+  if (fromStorage && ids.includes(fromStorage)) return fromStorage;
+
+  return ids[ids.length - 1] ?? 'main';
+};
+
+const PreviewMode = () => {
+  const compositions = getCompositions();
+  const ids = compositions.map((c) => c.id);
+  const [selectedId, setSelectedId] = React.useState(() => pickInitialCompositionId(ids));
+
+  const selected = compositions.find((c) => c.id === selectedId) ?? compositions[compositions.length - 1];
 
   React.useEffect(() => {
-    if (isRendering) {
-      (window as any).__OPEN_MOTION_READY__ = true;
+    if (!selected && ids.length > 0) {
+      setSelectedId(pickInitialCompositionId(ids));
     }
-  }, [isRendering]);
+  }, [ids.join('|')]);
 
-  if (isRendering) {
+  React.useEffect(() => {
+    if (typeof window === 'undefined') return;
+    window.localStorage.setItem(STORAGE_KEY, selectedId);
+
+    const url = new URL(window.location.href);
+    url.searchParams.set('comp', selectedId);
+    window.history.replaceState({}, '', url.toString());
+  }, [selectedId]);
+
+  if (!selected) {
     return (
-      <CompositionProvider config={config} frame={(window as any).__OPEN_MOTION_FRAME__}>
-        <App />
-      </CompositionProvider>
+      <div style={{ padding: 16, fontFamily: 'ui-sans-serif, system-ui' }}>
+        No compositions registered.
+      </div>
     );
   }
 
+  const config: VideoConfig = {
+    width: selected.width,
+    height: selected.height,
+    fps: selected.fps,
+    durationInFrames: selected.durationInFrames,
+  };
+
+  const renderUrl = typeof window !== 'undefined' ? window.location.origin : 'http://127.0.0.1:5173';
+  const renderCmd = 'open-motion render -u ' + renderUrl + ' -o out.mp4 --composition ' + selectedId;
+
   return (
-    <div style={{ padding: '20px' }}>
-      <Player component={App} config={config} />
-      <div style={{ display: 'none' }}>
-        <Composition id="main" component={App} {...config} />
+    <div style={{ minHeight: '100vh', padding: 16, background: '#f6f6f7', boxSizing: 'border-box' }}>
+      <div style={{ display: 'flex', gap: 12, alignItems: 'center', marginBottom: 12, flexWrap: 'wrap' }}>
+        <div style={{ fontSize: 12, color: '#333', fontFamily: 'ui-sans-serif, system-ui' }}>Composition</div>
+        <select
+          value={selectedId}
+          onChange={(e) => setSelectedId(e.target.value)}
+          style={{ padding: '6px 8px', borderRadius: 6, border: '1px solid #ccc', background: '#fff' }}
+        >
+          {compositions.map((c) => (
+            <option key={c.id} value={c.id}>
+              {c.id}
+            </option>
+          ))}
+        </select>
+        <div style={{ fontSize: 12, color: '#666', fontFamily: 'ui-sans-serif, system-ui' }}>
+          {config.width}x{config.height} / {config.fps}fps / {config.durationInFrames}f
+        </div>
+
+        <div style={{ flex: 1 }} />
+
+        <div style={{ display: 'flex', gap: 8, alignItems: 'center', marginLeft: 'auto', flex: '1 1 520px', justifyContent: 'flex-end' }}>
+          <div style={{ fontSize: 12, color: '#333', fontFamily: 'ui-sans-serif, system-ui' }}>Render</div>
+          <div
+            style={{
+              fontSize: 12,
+              color: '#111',
+              fontFamily: 'ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", "Courier New", monospace',
+              background: '#fff',
+              border: '1px solid #ddd',
+              borderRadius: 6,
+              padding: '6px 8px',
+              maxWidth: 'min(720px, 100%)',
+              wordBreak: 'break-all',
+            }}
+          >
+            {renderCmd}
+          </div>
+        </div>
       </div>
+
+      <Player key={selectedId} component={selected.component} config={config} />
     </div>
+  );
+};
+
+const RenderMode = () => {
+  const frame = (window as any).__OPEN_MOTION_FRAME__ as number;
+  const compositionId = ((window as any).__OPEN_MOTION_COMPOSITION_ID__ as string | undefined) ?? 'main';
+  const inputProps = (window as any).__OPEN_MOTION_INPUT_PROPS__ ?? {};
+
+  const selected = getCompositionById(compositionId) ?? getCompositions()[0];
+  if (!selected) return null;
+
+  const config: VideoConfig = {
+    width: selected.width,
+    height: selected.height,
+    fps: selected.fps,
+    durationInFrames: selected.durationInFrames,
+  };
+
+  const Component = selected.component;
+  return (
+    <CompositionProvider config={config} frame={frame} inputProps={inputProps}>
+      <Component />
+    </CompositionProvider>
+  );
+};
+
+const Root = () => {
+  const isRendering = typeof (window as any).__OPEN_MOTION_FRAME__ === 'number';
+  return (
+    <>
+      <RegisterCompositions />
+      {isRendering ? <RenderMode /> : <PreviewMode />}
+    </>
   );
 };
 

@@ -245,15 +245,13 @@ function updateMainTsx(
     return; // Already imported
   }
 
-  // Insert import after the last import block
-  const lastImportIndex = content.lastIndexOf('\nimport ');
-  if (lastImportIndex !== -1) {
-    const endOfLastImport = content.indexOf('\n', lastImportIndex + 1);
-    content =
-      content.slice(0, endOfLastImport + 1) +
-      importStatement +
-      '\n' +
-      content.slice(endOfLastImport + 1);
+  // Insert import after the last import statement (supports multi-line imports)
+  const importRe = /^import[\s\S]*?;\s*$/gm;
+  const matches = Array.from(content.matchAll(importRe));
+  if (matches.length > 0) {
+    const last = matches[matches.length - 1];
+    const insertAt = (last.index ?? 0) + last[0].length;
+    content = content.slice(0, insertAt) + '\n' + importStatement + '\n' + content.slice(insertAt);
   } else {
     content = importStatement + '\n' + content;
   }
