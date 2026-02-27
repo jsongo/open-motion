@@ -115,6 +115,9 @@ importers:
       diff:
         specifier: ^5.2.0
         version: 5.2.2
+      dotenv:
+        specifier: ^16.0.0
+        version: 16.6.1
       ollama-ai-provider:
         specifier: ^1.2.0
         version: 1.2.0(zod@3.25.76)
@@ -896,6 +899,10 @@ packages:
   dir-glob@3.0.1:
     resolution: {integrity: sha512-WkrWp9GR4KXfKGYzOLmTuGVi1UWFfws377n9cc55/tb6DuqyF6pcQ5AbiHEshaDpY9v6oaSr2XCDidGmMwdzIA==}
     engines: {node: '>=8'}
+
+  dotenv@16.6.1:
+    resolution: {integrity: sha512-uBq4egWHTcTt33a72vpSG0z3HnPuIl6NqYcTrKEg2azoEyl2hpW0zqlxysq2pK9HlDIHyHyakeYaYnSAwd8bow==}
+    engines: {node: '>=12'}
 
   eastasianwidth@0.2.0:
     resolution: {integrity: sha512-I88TYZWc9XiYHRQ4/3c5rjjfgkjhLyW2luGIheGERbNQ6OY7yTybanSpDXZa8y7VUP9YmDcYa+eyq4ca7iLqWA==}
@@ -1988,6 +1995,7 @@ snapshots:
       cli-progress: 3.12.0
       commander: 11.1.0
       diff: 5.2.2
+      dotenv: 16.6.1
       ollama-ai-provider: 1.2.0(zod@3.25.76)
       playwright: 1.58.1
     transitivePeerDependencies:
@@ -2285,6 +2293,8 @@ snapshots:
   dir-glob@3.0.1:
     dependencies:
       path-type: 4.0.0
+
+  dotenv@16.6.1: {}
 
   eastasianwidth@0.2.0: {}
 

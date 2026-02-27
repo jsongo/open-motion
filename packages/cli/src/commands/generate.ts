@@ -95,18 +95,32 @@ function formatRun(pm: 'pnpm' | 'npm', script: string): string {
 /**
  * Convert a video title (or scene title) to a valid PascalCase component name.
  * E.g. "React Lifecycle" → "ReactLifecycle"
+ *
+ * Rules enforced here (defense-in-depth, even if LLM follows the prompt):
+ * - Only ASCII letters and digits are kept; all other characters (CJK, spaces,
+ *   hyphens, emoji, …) are treated as word separators.
+ * - Each word is capitalised so the result is PascalCase.
+ * - If the result starts with a digit (e.g. "20秒…" → "20"), a "Video" prefix
+ *   is prepended so the identifier is always valid.
+ * - If nothing survives the filter, "VideoProject" is used as a fallback.
  */
 function toPascalCase(str: string): string {
-  return str
-    .replace(/[^a-zA-Z0-9\u3040-\u30FF\u4E00-\u9FFF]+/g, ' ')
+  // Replace any run of non-ASCII-alphanumeric characters with a single space,
+  // then split, capitalise each word and join.
+  const result = str
+    .replace(/[^a-zA-Z0-9]+/g, ' ')
     .trim()
     .split(/\s+/)
-    .map((word) =>
-      /^[a-zA-Z]/.test(word)
-        ? word.charAt(0).toUpperCase() + word.slice(1)
-        : word
-    )
+    .filter(Boolean)
+    .map((word) => word.charAt(0).toUpperCase() + word.slice(1))
     .join('');
+
+  if (!result) return 'VideoProject';
+
+  // Ensure the identifier does not start with a digit.
+  if (/^[0-9]/.test(result)) return 'Video' + result;
+
+  return result;
 }
 
 /**

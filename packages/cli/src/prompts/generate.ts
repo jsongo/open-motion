@@ -38,9 +38,14 @@ setTimeout, setInterval, or any real-time mechanism for animation.
 
 ## Naming rules (critical)
 - Any exported component name MUST be a valid TypeScript/JavaScript identifier in PascalCase.
-- The name MUST start with a letter A-Z (do not start with a digit).
-- Use ASCII letters and digits only for identifiers (A-Z, a-z, 0-9). Do NOT use Japanese text, spaces, hyphens, emoji, or punctuation in identifiers.
-- If the title is non-Latin (e.g. Japanese), romanize/translate it for the identifier (e.g. "30秒でわかるRemotion" -> "RemotionIn30Seconds").
+- The name MUST start with a letter A-Z (NEVER start with a digit or any non-ASCII character).
+- Use ASCII letters and digits only for identifiers (A-Z, a-z, 0-9). Do NOT use Japanese text, Chinese text, spaces, hyphens, underscores at the start, emoji, or punctuation in identifiers.
+- If the title is non-Latin (e.g. Japanese or Chinese), you MUST romanize/translate it for the identifier.
+  - BAD:  "20秒でわかる三権分立" → identifier starts with digit AND contains Japanese → INVALID
+  - GOOD: "20秒でわかる三権分立" → "SankenbunritsuIn20Seconds" (romanized + digit moved inside) → VALID
+  - BAD:  "量子コンピュータ入門" → contains Japanese → INVALID
+  - GOOD: "量子コンピュータ入門" → "IntroToQuantumComputers" → VALID
+- This rule applies to EVERY identifier: componentName in scenes AND any name derived from videoTitle.
 
 ## Minimal valid example
 \`\`\`tsx
@@ -162,7 +167,7 @@ Video description: "${description}"
 
 Respond with a JSON object (and nothing else) in this exact shape:
 {
-  "videoTitle": "A concise title for the entire video",
+  "videoTitle": "A concise title for the entire video (may contain any language/characters)",
   "scenes": [
     {
       "id": "kebab-case-unique-id",
@@ -177,10 +182,12 @@ Respond with a JSON object (and nothing else) in this exact shape:
 Guidelines:
 - Total video duration should feel natural for the content (typically 20-90 seconds)
 - Each scene should be self-contained and visually distinct
+- \`videoTitle\` is a human-readable display title and may use any language or characters.
 - \`componentName\` must be a valid PascalCase React component name AND a valid JS/TS identifier:
-  - start with A-Z (never start with a number)
-  - ASCII letters/digits only (no Japanese/non-ASCII characters, no spaces, no hyphens)
-  - examples: "IntroScene", "HowItWorksScene", "RemotionIn30SecondsScene"
+  - start with A-Z (NEVER start with a digit or non-ASCII character)
+  - ASCII letters/digits only (no Japanese/Chinese/non-ASCII characters, no spaces, no hyphens)
+  - If the scene title is Japanese/Chinese, romanize it: e.g. "三権分立とは" → "WhatIsSankenbunritsu"
+  - examples: "IntroScene", "HowItWorksScene", "SankenbunritsuIn20SecondsScene"
 - \`id\` must be unique kebab-case (e.g. "intro-scene", "data-flow-scene")
 - Aim for 3-6 scenes unless the content clearly needs more or fewer
 - Describe animations concretely (e.g. "text fades in from bottom, then a line draws across")
@@ -262,6 +269,21 @@ export function parsePlanResponse(text: string): ScenePlan {
     throw new Error(
       `LLM scene plan is missing required fields.\nParsed:\n${JSON.stringify(plan, null, 2)}`
     );
+  }
+
+  // Validate that every componentName is a legal JS/TS identifier.
+  // This is a defence-in-depth check: the prompt already instructs the LLM,
+  // but we must not trust LLM output blindly.
+  const validIdentifier = /^[a-zA-Z_$][a-zA-Z0-9_$]*$/;
+  for (const scene of plan.scenes) {
+    if (!scene.componentName || !validIdentifier.test(scene.componentName)) {
+      throw new Error(
+        `LLM returned an invalid componentName: "${scene.componentName}".\n` +
+        `componentName must be a valid JS/TS identifier (ASCII PascalCase, must not start with a digit).\n` +
+        `If the title is non-Latin (e.g. Japanese), the LLM must romanize it.\n` +
+        `Please retry the generation.`
+      );
+    }
   }
 
   return plan;
