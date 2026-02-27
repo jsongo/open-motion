@@ -8,10 +8,14 @@ import { resolveConfig, validateConfig, type CliConfigOverrides } from '../llm/c
 import { createModel } from '../llm/factory';
 import {
   GENERATE_SYSTEM_PROMPT,
+  CAPTIONS_SYSTEM_PROMPT,
   buildPlanningPrompt,
+  buildCaptionsPrompt,
   buildSceneCodePrompt,
   parsePlanResponse,
+  parseCaptionsResponse,
   parseCodeResponse,
+  validateSceneCode,
   type ScenePlan,
 } from '../prompts/generate';
 
@@ -122,52 +126,32 @@ function isInitialized(cwd: string): boolean {
 /**
  * Check for files not created by "open-motion init".
  */
-function getUnexpectedFiles(cwd: string): string[] {
-  const initialFiles = new Set([
-    '.npmrc',
-    'package.json',
-    'index.html',
-    'vite.config.ts',
-    'src/main.tsx',
-    'src/App.tsx',
-  ]);
+function getOverwriteHints(cwd: string, outputDir: string): string[] {
+  const hints: string[] = [];
 
-  const allowedExtras = new Set([
-    'node_modules',
-    'pnpm-lock.yaml',
-    'package-lock.json',
-    'yarn.lock',
-    '.git',
-    '.gitignore',
-    'dist',
-    '.open-motion-tmp',
-    '.DS_Store',
-  ]);
+  if (!fs.existsSync(cwd)) return hints;
 
-  const unexpected: string[] = [];
-  if (!fs.existsSync(cwd)) return [];
-
-  const files = fs.readdirSync(cwd);
-  for (const f of files) {
-    if (initialFiles.has(f) || allowedExtras.has(f)) continue;
-    if (f === 'src') {
-      if (fs.statSync(path.join(cwd, f)).isDirectory()) {
-        const srcFiles = fs.readdirSync(path.join(cwd, 'src'));
-        for (const sf of srcFiles) {
-          const relSf = path.join('src', sf);
-          if (!initialFiles.has(relSf)) {
-            unexpected.push(relSf);
-          }
-        }
-      } else {
-        unexpected.push(f);
+  // If the output directory exists and has content, we may overwrite.
+  if (fs.existsSync(outputDir)) {
+    try {
+      const entries = fs.readdirSync(outputDir);
+      const meaningful = entries.filter((e) => e !== '.DS_Store');
+      if (meaningful.length > 0) {
+        hints.push(`Output directory is not empty: ${path.relative(cwd, outputDir)}`);
       }
-      continue;
+    } catch {
+      // Ignore read errors; still proceed.
     }
-    unexpected.push(f);
   }
 
-  return unexpected;
+  // We will attempt to append a Composition into src/main.tsx (if it exists).
+  const srcDir = path.dirname(outputDir);
+  const mainTsxPath = path.join(srcDir, 'main.tsx');
+  if (fs.existsSync(mainTsxPath)) {
+    hints.push(`src/main.tsx will be updated`);
+  }
+
+  return hints;
 }
 
 /**
@@ -178,7 +162,8 @@ function buildCompositionFile(
   plan: ScenePlan,
   fps: number,
   width: number,
-  height: number
+  height: number,
+  srtContent: string
 ): string {
   const imports = plan.scenes
     .map((s) => `import { ${s.componentName} } from './scenes/${s.componentName}';`)
@@ -197,19 +182,121 @@ function buildCompositionFile(
   const totalFrames = offset;
   const componentName = toPascalCase(videoTitle) + 'Video';
 
-  return `import React from 'react';
-import { Sequence, useVideoConfig } from '@open-motion/core';
-${imports}
+  // Use JSON string escaping so we can embed arbitrary caption text safely.
+  const srtLiteral = JSON.stringify(srtContent);
 
-/** Auto-generated composition: ${videoTitle} */
-export const ${componentName} = () => {
-  const { width, height } = useVideoConfig();
-  return (
-    <div style={{ width, height, overflow: 'hidden', backgroundColor: '#000' }}>
-${sequences}
-    </div>
-  );
-};
+  return `import React, { useMemo } from 'react';
+ import {
+   Sequence,
+   useCurrentFrame,
+   useVideoConfig,
+   interpolate,
+   spring,
+   parseSrt,
+   type SubtitleItem,
+ } from '@open-motion/core';
+ ${imports}
+
+ /** Auto-generated composition: ${videoTitle} */
+ const SRT_CAPTIONS: string = ${srtLiteral};
+
+  const CaptionOverlay: React.FC<{ subtitles: SubtitleItem[] }> = ({ subtitles }) => {
+    const frame = useCurrentFrame();
+    const { fps } = useVideoConfig();
+    const currentTime = frame / fps;
+
+    const active = subtitles.find(
+      (s) => currentTime >= s.startInSeconds && currentTime < s.endInSeconds
+    );
+    if (!active) return null;
+
+   const startFrame = Math.round(active.startInSeconds * fps);
+   const relFrame = Math.max(0, frame - startFrame);
+
+   const enter = spring({ frame: relFrame, fps, config: { stiffness: 120, damping: 14 } });
+   const opacity = interpolate(enter, [0, 1], [0, 1], { extrapolateRight: 'clamp' });
+   const scale = interpolate(enter, [0, 1], [0.96, 1], { extrapolateRight: 'clamp' });
+
+    // Simple TikTok-ish word highlight sweep.
+    // Sweep exactly once across the whole subtitle block (no looping).
+    const words = active.text.replace(/\s+/g, ' ').trim().split(' ').filter(Boolean);
+    const displayedWords = words.length > 0 ? words : [active.text];
+    const blockDurationInFrames = Math.max(
+      1,
+      Math.round((active.endInSeconds - active.startInSeconds) * fps)
+    );
+    const sweep = interpolate(
+      relFrame,
+      [0, blockDurationInFrames],
+      [0, displayedWords.length],
+      { extrapolateRight: 'clamp' }
+    );
+    const highlightIndex = Math.min(displayedWords.length - 1, Math.floor(sweep));
+
+   return (
+     <div
+       style={{
+         position: 'absolute',
+         left: 0,
+         right: 0,
+         bottom: 72,
+         display: 'flex',
+         justifyContent: 'center',
+          padding: '0 48px',
+          pointerEvents: 'none',
+          opacity,
+          transform: \`scale(\${scale})\`,
+        }}
+      >
+       <div
+         style={{
+           maxWidth: '92%',
+           backgroundColor: 'rgba(0,0,0,0.6)',
+           border: '2px solid rgba(255,255,255,0.14)',
+           borderRadius: 18,
+           padding: '14px 18px',
+           color: '#fff',
+           fontSize: 46,
+           fontWeight: 900,
+           lineHeight: 1.15,
+           letterSpacing: '-0.02em',
+           textAlign: 'center',
+           textShadow: '4px 4px 0px rgba(0,0,0,0.85)',
+           display: 'flex',
+           flexWrap: 'wrap',
+           justifyContent: 'center',
+           gap: 12,
+         }}
+       >
+          {displayedWords.map((w, i) => (
+            <span
+              key={i}
+              style={{
+                padding: '2px 10px',
+                borderRadius: 10,
+                backgroundColor: highlightIndex === i ? '#ff0050' : 'transparent',
+                transform: highlightIndex === i ? 'scale(1.06)' : 'scale(1)',
+                transition: 'transform 80ms linear',
+              }}
+            >
+              {w}
+            </span>
+          ))}
+       </div>
+     </div>
+   );
+ };
+
+ export const ${componentName} = () => {
+   const { width, height } = useVideoConfig();
+   const subtitles = useMemo(() => parseSrt(SRT_CAPTIONS), []);
+   return (
+     <div style={{ width, height, overflow: 'hidden', backgroundColor: '#000', position: 'relative' }}>
+ ${sequences}
+       <CaptionOverlay subtitles={subtitles} />
+     </div>
+   );
+ };
 
 /** Total duration in frames: ${totalFrames} (${(totalFrames / fps).toFixed(1)}s at ${fps}fps) */
 export const ${componentName}Config = {
@@ -220,7 +307,36 @@ export const ${componentName}Config = {
   fps: ${fps},
   durationInFrames: ${totalFrames},
 } as const;
-`;
+ `;
+}
+
+function formatSrtTimestamp(totalSeconds: number): string {
+  const clamped = Math.max(0, totalSeconds);
+  const hours = Math.floor(clamped / 3600);
+  const minutes = Math.floor((clamped % 3600) / 60);
+  const seconds = Math.floor(clamped % 60);
+  const millis = Math.floor((clamped - Math.floor(clamped)) * 1000);
+  const pad2 = (n: number) => String(n).padStart(2, '0');
+  const pad3 = (n: number) => String(n).padStart(3, '0');
+  return `${pad2(hours)}:${pad2(minutes)}:${pad2(seconds)},${pad3(millis)}`;
+}
+
+function buildFallbackSrt(plan: ScenePlan): string {
+  let t = 0;
+  let id = 1;
+  const blocks: string[] = [];
+  for (const s of plan.scenes) {
+    const start = t;
+    const end = t + Math.max(0.5, s.durationInSeconds);
+    const text = (s.title || s.description || '...').toString().trim() || '...';
+    const safeText = text.split(/\r?\n/).slice(0, 2).join('\n');
+    blocks.push(
+      `${id}\n${formatSrtTimestamp(start)} --> ${formatSrtTimestamp(end)}\n${safeText}`
+    );
+    id++;
+    t = end;
+  }
+  return blocks.join('\n\n') + '\n';
 }
 
 /**
@@ -295,48 +411,6 @@ export async function runGenerate(
   description: string,
   options: GenerateOptions
 ): Promise<void> {
-  // ------------------------------------------------------------------
-  // 0. Environment check
-  // ------------------------------------------------------------------
-  const initialized = isInitialized(process.cwd());
-  const unexpectedFiles = getUnexpectedFiles(process.cwd());
-
-  if (!initialized || unexpectedFiles.length > 0) {
-    console.log(chalk.yellow('\n⚠️  Warning: Existing files may be overwritten.'));
-    if (!initialized) {
-      console.log(
-        chalk.yellow(
-          'This directory does not appear to be an OpenMotion project (run "open-motion init" first).'
-        )
-      );
-    } else {
-      console.log(
-        chalk.yellow('This directory contains files not created by "open-motion init".')
-      );
-    }
-    console.log('');
-
-    const rl = readline.createInterface({
-      input: process.stdin,
-      output: process.stdout,
-    });
-
-    const answer = await new Promise<string>((resolve) => {
-      rl.question(
-        chalk.bold('Do you want to continue? ') + chalk.dim('(y/N) '),
-        (a) => {
-          resolve(a.trim().toLowerCase());
-        }
-      );
-    });
-    rl.close();
-
-    if (answer !== 'y' && answer !== 'yes') {
-      console.log(chalk.dim('\nAborted.'));
-      return;
-    }
-  }
-
   const fps = options.fps ?? 30;
   const width = options.width ?? 1280;
   const height = options.height ?? 720;
@@ -383,10 +457,49 @@ export async function runGenerate(
   }
 
   // ------------------------------------------------------------------
-  // 2. Plan scenes
+  // 2. Environment / overwrite check (after config validation)
+  // ------------------------------------------------------------------
+  const initialized = isInitialized(process.cwd());
+  const overwriteHints = getOverwriteHints(process.cwd(), outputDir);
+
+  if (!initialized || overwriteHints.length > 0) {
+    console.log(chalk.yellow('\n⚠️  Warning: Existing files may be overwritten.'));
+    if (!initialized) {
+      console.log(
+        chalk.yellow(
+          'This directory does not appear to be an OpenMotion project (run "open-motion init" first).'
+        )
+      );
+    }
+    overwriteHints.forEach((h) => console.log(chalk.yellow(`- ${h}`)));
+    console.log('');
+
+    const rl = readline.createInterface({
+      input: process.stdin,
+      output: process.stdout,
+    });
+
+    const answer = await new Promise<string>((resolve) => {
+      rl.question(
+        chalk.bold('Do you want to continue? ') + chalk.dim('(y/N) '),
+        (a) => {
+          resolve(a.trim().toLowerCase());
+        }
+      );
+    });
+    rl.close();
+
+    if (answer !== 'y' && answer !== 'yes') {
+      console.log(chalk.dim('\nAborted.'));
+      return;
+    }
+  }
+
+  // ------------------------------------------------------------------
+  // 3. Plan scenes
   // ------------------------------------------------------------------
   const spinner = new Spinner();
-  spinner.start('[1/3] Planning scene structure...');
+  spinner.start('[1/4] Planning scene structure...');
 
   let plan: ScenePlan;
   try {
@@ -414,7 +527,7 @@ export async function runGenerate(
     );
   }
 
-  spinner.succeed(`[1/3] Scene structure: ${plan.scenes.length} scene(s)`);
+  spinner.succeed(`[1/4] Scene structure: ${plan.scenes.length} scene(s)`);
   plan.scenes.forEach((s, i) => {
     console.log(
       chalk.dim(`       Scene ${i + 1}: ${s.title} (${s.durationInSeconds}s)`)
@@ -423,9 +536,53 @@ export async function runGenerate(
   console.log('');
 
   // ------------------------------------------------------------------
-  // 3. Generate TSX for each scene
+  // 3. Generate captions (SRT)
   // ------------------------------------------------------------------
-  spinner.start(`[2/3] Generating TSX... (0/${plan.scenes.length})`);
+  spinner.start('[2/4] Generating captions (SRT)...');
+
+  // Build a deterministic scene timeline for caption planning.
+  let cursor = 0;
+  const timeline = plan.scenes.map((s) => {
+    const startInSeconds = cursor;
+    const endInSeconds = cursor + s.durationInSeconds;
+    cursor = endInSeconds;
+    return {
+      title: s.title,
+      description: s.description,
+      startInSeconds,
+      endInSeconds,
+    };
+  });
+
+  let srtContent = '';
+  try {
+    const { text } = await generateText({
+      model,
+      system: CAPTIONS_SYSTEM_PROMPT,
+      prompt: buildCaptionsPrompt({
+        videoTitle: plan.videoTitle,
+        description,
+        scenes: timeline,
+      }),
+      maxTokens: 2048,
+    });
+    srtContent = parseCaptionsResponse(text).srt;
+    spinner.succeed('[2/4] Captions generated');
+  } catch (err) {
+    srtContent = buildFallbackSrt(plan);
+    spinner.succeed('[2/4] Captions generated (fallback)');
+    console.log(
+      chalk.yellow(
+        `  Note: failed to generate captions via LLM; using a simple fallback. (${(err as Error).message})`
+      )
+    );
+  }
+  console.log('');
+
+  // ------------------------------------------------------------------
+  // 4. Generate TSX for each scene
+  // ------------------------------------------------------------------
+  spinner.start(`[3/4] Generating TSX... (0/${plan.scenes.length})`);
 
   const scenesDir = path.join(outputDir);
   fs.mkdirSync(scenesDir, { recursive: true });
@@ -434,49 +591,78 @@ export async function runGenerate(
 
   for (let i = 0; i < plan.scenes.length; i++) {
     const scene = plan.scenes[i];
-    spinner.update(`[2/3] Generating TSX... (${i + 1}/${plan.scenes.length}) — ${scene.title}`);
+    spinner.update(`[3/4] Generating TSX... (${i + 1}/${plan.scenes.length}) — ${scene.title}`);
 
     const durationInFrames = Math.round(scene.durationInSeconds * fps);
 
-    try {
-      const { text } = await generateText({
-        model,
-        system: GENERATE_SYSTEM_PROMPT,
-        prompt: buildSceneCodePrompt({
-          componentName: scene.componentName,
-          title: scene.title,
-          description: scene.description,
-          durationInSeconds: scene.durationInSeconds,
-          durationInFrames,
-          fps,
-          width,
-          height,
-          sceneIndex: i,
-          totalScenes: plan.scenes.length,
-        }),
-        maxTokens: 4096,
-      });
+    const scenePromptArgs = {
+      componentName: scene.componentName,
+      title: scene.title,
+      description: scene.description,
+      durationInSeconds: scene.durationInSeconds,
+      durationInFrames,
+      fps,
+      width,
+      height,
+      sceneIndex: i,
+      totalScenes: plan.scenes.length,
+    };
 
-      const code = parseCodeResponse(text);
-      const filePath = path.join(scenesDir, `${scene.componentName}.tsx`);
-      fs.writeFileSync(filePath, code + '\n', 'utf8');
-      generatedFiles.push(filePath);
-    } catch (err) {
-      spinner.fail(`Failed to generate scene "${scene.title}"`);
-      console.error(chalk.red((err as Error).message));
+    const MAX_ATTEMPTS = 2;
+    let lastError: Error | null = null;
+    let succeeded = false;
+
+    for (let attempt = 1; attempt <= MAX_ATTEMPTS; attempt++) {
+      try {
+        if (attempt > 1) {
+          spinner.update(
+            `[3/4] Retrying TSX... (${i + 1}/${plan.scenes.length}) — ${scene.title} [attempt ${attempt}/${MAX_ATTEMPTS}]`
+          );
+        }
+
+        const { text } = await generateText({
+          model,
+          system: GENERATE_SYSTEM_PROMPT,
+          prompt: buildSceneCodePrompt(scenePromptArgs),
+          maxTokens: 4096,
+        });
+
+        const code = parseCodeResponse(text);
+        validateSceneCode(code, scene.componentName);
+
+        const filePath = path.join(scenesDir, `${scene.componentName}.tsx`);
+        fs.writeFileSync(filePath, code + '\n', 'utf8');
+        generatedFiles.push(filePath);
+        succeeded = true;
+        break;
+      } catch (err) {
+        lastError = err as Error;
+        if (attempt < MAX_ATTEMPTS) {
+          console.log(
+            chalk.yellow(
+              `\n  Warning (attempt ${attempt}/${MAX_ATTEMPTS}): ${lastError.message}\n  Retrying...`
+            )
+          );
+        }
+      }
+    }
+
+    if (!succeeded) {
+      spinner.fail(`Failed to generate scene "${scene.title}" after ${MAX_ATTEMPTS} attempts`);
+      console.error(chalk.red(lastError?.message ?? 'Unknown error'));
       process.exit(1);
     }
   }
 
-  spinner.succeed(`[2/3] TSX generation complete (${plan.scenes.length} scene(s))`);
+  spinner.succeed(`[3/4] TSX generation complete (${plan.scenes.length} scene(s))`);
   console.log('');
 
   // ------------------------------------------------------------------
-  // 4. Generate composition wrapper
+  // 5. Generate composition wrapper
   // ------------------------------------------------------------------
-  spinner.start('[3/3] Generating composition file...');
+  spinner.start('[4/4] Generating composition file...');
 
-  const compositionCode = buildCompositionFile(plan.videoTitle, plan, fps, width, height);
+  const compositionCode = buildCompositionFile(plan.videoTitle, plan, fps, width, height, srtContent);
   const compositionComponentName = toPascalCase(plan.videoTitle) + 'Video';
 
   // Total duration for the composition
@@ -503,7 +689,7 @@ export async function runGenerate(
   });
 
   const updatedMainTsx = fs.existsSync(mainTsxPath);
-  spinner.succeed('[3/3] Composition generation complete');
+  spinner.succeed('[4/4] Composition generation complete');
   console.log('');
 
   // ------------------------------------------------------------------

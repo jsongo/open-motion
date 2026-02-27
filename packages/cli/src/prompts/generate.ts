@@ -79,6 +79,80 @@ export const ExampleScene = () => {
 `;
 
 // ---------------------------------------------------------------------------
+// Caption (SRT) generation
+// ---------------------------------------------------------------------------
+
+export const CAPTIONS_SYSTEM_PROMPT = `You generate subtitle captions for videos.
+
+You must output VALID JSON only (no markdown, no extra keys).
+The JSON must contain a single key: { "srt": "..." } where the value is a complete SRT file contents.
+
+SRT rules:
+- Use standard time format: HH:MM:SS,mmm --> HH:MM:SS,mmm
+- Number captions starting from 1
+- Separate each caption block with a blank line
+- Do not include backticks in the SRT text
+- Keep each caption to 1-2 lines
+- Ensure times are strictly increasing and do not overlap
+`;
+
+export interface CaptionsContext {
+  videoTitle: string;
+  description: string;
+  scenes: Array<{
+    title: string;
+    description: string;
+    startInSeconds: number;
+    endInSeconds: number;
+  }>;
+}
+
+export function buildCaptionsPrompt(ctx: CaptionsContext): string {
+  return `Create subtitles (SRT) for the following video.
+
+Video title: ${ctx.videoTitle}
+Video description: ${ctx.description}
+
+Scene timeline (must keep captions within these bounds):
+${ctx.scenes
+  .map(
+    (s, i) =>
+      `${i + 1}. ${s.title} (${s.startInSeconds.toFixed(3)}s - ${s.endInSeconds.toFixed(3)}s): ${s.description}`
+  )
+  .join('\n')}
+
+Guidelines:
+- Write captions that match what the viewer sees on-screen in each scene (short, punchy)
+- Prefer 1-3 caption blocks per scene
+- Keep the total captions aligned to the total timeline (from 0s to ${ctx.scenes[ctx.scenes.length - 1].endInSeconds.toFixed(
+    3
+  )}s)
+
+Respond with JSON only in this exact shape:
+{ "srt": "<SRT content>" }`;
+}
+
+export function parseCaptionsResponse(text: string): { srt: string } {
+  const cleaned = text
+    .replace(/^```(?:json)?\s*/m, '')
+    .replace(/\s*```\s*$/m, '')
+    .trim();
+
+  let out: { srt: string };
+  try {
+    out = JSON.parse(cleaned);
+  } catch {
+    throw new Error(`LLM returned invalid JSON for captions.\nRaw response:\n${text}`);
+  }
+
+  if (!out || typeof out.srt !== 'string' || out.srt.trim().length === 0) {
+    throw new Error(`LLM captions response is missing required field "srt".\nParsed:\n${JSON.stringify(out, null, 2)}`);
+  }
+
+  return { srt: out.srt };
+}
+
+// ---------------------------------------------------------------------------
 // Planning prompt: ask the LLM to break a description into scenes
 // ---------------------------------------------------------------------------
 export function buildPlanningPrompt(description: string): string {
@@ -201,4 +275,28 @@ export function parseCodeResponse(text: string): string {
     .replace(/^```(?:tsx?|jsx?|typescript|javascript)?\s*\n?/m, '')
     .replace(/\n?```\s*$/m, '')
     .trim();
+}
+
+/**
+ * Validate that generated scene code contains the expected named export.
+ * Throws a descriptive error if the code is empty or the export is missing.
+ */
+export function validateSceneCode(code: string, componentName: string): void {
+  if (!code || code.trim().length === 0) {
+    throw new Error(
+      `LLM returned empty code for component "${componentName}". The scene file would be blank.`
+    );
+  }
+
+  // Accept: export const Foo, export function Foo, export class Foo
+  const namedExportRe = new RegExp(
+    `export\\s+(const|function|class)\\s+${componentName}\\b`
+  );
+  if (!namedExportRe.test(code)) {
+    throw new Error(
+      `Generated code for "${componentName}" is missing the required named export.\n` +
+      `Expected: \`export const ${componentName} = ...\` (or export function/class).\n` +
+      `The exported name in the file must exactly match "${componentName}".`
+    );
+  }
 }
