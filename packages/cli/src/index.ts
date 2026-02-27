@@ -311,6 +311,8 @@ export const runRender = async (options: {
   format?: 'mp4' | 'gif' | 'webp' | 'webm' | 'auto';
   chromiumPath?: string;
   timeout?: number;
+  bgm?: string;
+  bgmVolume?: number;
 }) => {
   const timeout = options.timeout || parseInt(process.env.OPEN_MOTION_RENDER_TIMEOUT || '300000', 10);
 
@@ -440,6 +442,24 @@ export const runRender = async (options: {
     return asset;
   });
 
+  // Inject a render-time BGM track (file path on disk)
+  if (options.bgm) {
+    const bgmPath = path.resolve(process.cwd(), options.bgm);
+
+    if (!fs.existsSync(bgmPath)) {
+      console.error(`BGM file not found: ${bgmPath}`);
+      process.exit(1);
+    }
+
+    resolvedAudioAssets.push({
+      src: bgmPath,
+      startFrame: 0,
+      startFrom: 0,
+      volume: options.bgmVolume ?? 1.0,
+      isBgm: true,
+    });
+  }
+
   const encodeBar = multibar.create(100, 0, { task: 'Encoding ' });
 
   // Determine output format
@@ -476,6 +496,7 @@ export const runRender = async (options: {
       framesDir: tmpDir,
       fps: config.fps,
       outputFile: options.out,
+      durationInFrames: config.durationInFrames,
       audioAssets: resolvedAudioAssets,
       onProgress: (percent) => encodeBar.update(Math.round(percent))
     });
@@ -549,6 +570,8 @@ Example Usage:
     .option('--format <format>', 'Output format (mp4, webm, gif, webp, auto)', 'auto')
     .option('--chromium-path <path>', 'Custom path to Chromium executable')
     .option('--timeout <number>', 'Timeout for browser operations in milliseconds', parseInt)
+    .option('--bgm <path>', 'Path to an MP3 file to use as background music')
+    .option('--bgm-volume <number>', 'BGM volume (0.0-1.0, default: 1.0)', parseFloat)
     .action(async (options) => {
       try {
         await runRender({
@@ -564,7 +587,9 @@ Example Usage:
           publicDir: options.publicDir,
           format: options.format,
           chromiumPath: options.chromiumPath,
-          timeout: options.timeout
+          timeout: options.timeout,
+          bgm: options.bgm,
+          bgmVolume: options.bgmVolume,
         });
       } catch (err) {
         console.error('Render failed:', err);

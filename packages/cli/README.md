@@ -57,4 +57,9 @@ open-motion edit src/scenes/IntroScene.tsx -m "Make the text color blue" --yes
 open-motion render --url http://localhost:5173 --out out.mp4 --concurrency 4
 ```
 
+### Render with background music (BGM)
+```bash
+open-motion render --url http://localhost:5173 --out out.mp4 --bgm ./music/bgm.mp3 --bgm-volume 0.5
+```
+
 Learn more at the [main OpenMotion repository](https://github.com/jsongo/open-motion).

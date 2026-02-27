@@ -141,6 +141,18 @@ Render a video from a running OpenMotion application.
 | `--public-dir <path>` | Public directory for static assets (default: `./public`) |
 | `--chromium-path <path>`| Path to custom Chromium executable |
 | `--timeout <number>` | Timeout for browser operations in ms |
+| `--bgm <path>` | Add a background music track from a local MP3 file |
+| `--bgm-volume <number>` | BGM volume (0.0-1.0, default: 1.0) |
+
+Example (render-time BGM):
+
+```bash
+open-motion render -u http://localhost:5173 -o out.mp4 --bgm ./music/bgm.mp3 --bgm-volume 0.5
+```
+
+Notes:
+- If the BGM is shorter than the video, it will loop to cover the full duration.
+- If the BGM is longer than the video, it will be trimmed to the video duration.
 
 ## 📚 API Reference
 

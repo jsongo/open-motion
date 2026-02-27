@@ -119,6 +119,18 @@ OPENAI_API_KEY=sk-...
 | `--public-dir <path>` | 静的アセットの公開ディレクトリ (デフォルト: `./public`) |
 | `--chromium-path <path>`| カスタムChromium実行ファイルのパス |
 | `--timeout <number>` | ブラウザ操作のタイムアウト (ミリ秒) |
+| `--bgm <path>` | ローカルのMP3ファイルをBGMとして追加 |
+| `--bgm-volume <number>` | BGM音量 (0.0-1.0, デフォルト: 1.0) |
+
+例 (レンダー時にBGMを追加):
+
+```bash
+open-motion render -u http://localhost:5173 -o out.mp4 --bgm ./music/bgm.mp3 --bgm-volume 0.5
+```
+
+補足:
+- BGMが動画より短い場合、動画の最後までループします。
+- BGMが動画より長い場合、動画の長さでカットされます。
 
 ## 📚 API リファレンス
 
