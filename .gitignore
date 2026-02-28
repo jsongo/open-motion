@@ -1,5 +1,8 @@
 node_modules
 dist
+.env
+.env.local
+.env.*.local
 .open-motion-tmp
 *.mp4
 *.png
@@ -14,3 +17,4 @@ progress.md.worktrees/
 *.avi
 *.mkv
 *.webm
+my_videos

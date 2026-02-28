@@ -73,6 +73,16 @@ export interface RenderOptions {
   onProgress?: (frame: number) => void;
   publicDir?: string;
   timeout?: number;
+  fonts?: RenderFont[];
+}
+
+export interface RenderFont {
+  /** CSS font-family name to register (e.g. "Noto Sans JP") */
+  family: string;
+  /** Path to a local font file (woff2/woff/ttf/otf) */
+  path: string;
+  weight?: string | number;
+  style?: string;
 }
 
 export interface GetCompositionsOptions {
@@ -124,7 +134,23 @@ export const getCompositions = async (url: string, options: GetCompositionsOptio
   return processedCompositions;
 };
 
-export const renderFrames = async ({ url, config, outputDir, compositionId, inputProps = {}, concurrency = 1, publicDir, onProgress, timeout = 300000 }: RenderOptions) => {
+const getFontMimeAndFormat = (fontPath: string): { mime: string; format?: string } => {
+  const ext = path.extname(fontPath).toLowerCase();
+  switch (ext) {
+    case '.woff2':
+      return { mime: 'font/woff2', format: 'woff2' };
+    case '.woff':
+      return { mime: 'font/woff', format: 'woff' };
+    case '.ttf':
+      return { mime: 'font/ttf', format: 'truetype' };
+    case '.otf':
+      return { mime: 'font/otf', format: 'opentype' };
+    default:
+      return { mime: 'application/octet-stream' };
+  }
+};
+
+export const renderFrames = async ({ url, config, outputDir, compositionId, inputProps = {}, concurrency = 1, publicDir, onProgress, timeout = 300000, fonts = [] }: RenderOptions) => {
   if (!fs.existsSync(outputDir)) {
     fs.mkdirSync(outputDir, { recursive: true });
   }
@@ -149,14 +175,59 @@ export const renderFrames = async ({ url, config, outputDir, compositionId, inpu
     const workerAudioAssets: any[] = [];
     const videoCache = new Map<string, string>(); // Path to local resolved path
 
+    const fontPayloads = (fonts || []).flatMap((f) => {
+      const resolvedPath = path.isAbsolute(f.path) ? f.path : path.resolve(process.cwd(), f.path);
+      try {
+        const { mime, format } = getFontMimeAndFormat(resolvedPath);
+        const base64 = fs.readFileSync(resolvedPath, { encoding: 'base64' });
+        return [
+          {
+            family: f.family,
+            weight: f.weight,
+            style: f.style,
+            base64,
+            mime,
+            format,
+          },
+        ];
+      } catch (e) {
+        console.warn(`[open-motion] Failed to read font file: ${resolvedPath}`);
+        return [];
+      }
+    });
+
     for (let i = startFrame; i <= endFrame && i < config.durationInFrames; i++) {
       if (i === startFrame) {
-        await page.addInitScript(({ frame, fps, hijackScript, compositionId, inputProps }) => {
+        await page.addInitScript(({ frame, fps, hijackScript, compositionId, inputProps, fontPayloads }) => {
           (window as any).__OPEN_MOTION_FRAME__ = frame;
           (window as any).__OPEN_MOTION_COMPOSITION_ID__ = compositionId;
           (window as any).__OPEN_MOTION_INPUT_PROPS__ = inputProps;
           (window as any).__OPEN_MOTION_READY__ = false;
           (window as any).__OPEN_MOTION_VIDEO_FRAMES__ = {};
+
+          (window as any).__OPEN_MOTION_FONTS_READY__ = Promise.resolve();
+          if (fontPayloads && Array.isArray(fontPayloads) && 'fonts' in document) {
+            (window as any).__OPEN_MOTION_FONTS_READY__ = (async () => {
+              for (const f of fontPayloads) {
+                try {
+                  const src = `url(data:${f.mime};base64,${f.base64})${f.format ? ` format('${f.format}')` : ''}`;
+                  const face = new FontFace(f.family, src, {
+                    weight: f.weight ? String(f.weight) : undefined,
+                    style: f.style ? String(f.style) : undefined,
+                  });
+                  await face.load();
+                  (document as any).fonts.add(face);
+                } catch (e) {
+                  // ignore
+                }
+              }
+              try {
+                await (document as any).fonts.ready;
+              } catch (e) {
+                // ignore
+              }
+            })();
+          }
 
           // Execute hijack script
           const script = document.createElement('script');
@@ -173,7 +244,8 @@ export const renderFrames = async ({ url, config, outputDir, compositionId, inpu
           fps: config.fps,
           hijackScript: getTimeHijackScript(i, config.fps),
           compositionId,
-          inputProps
+          inputProps,
+          fontPayloads,
         });
 
         await page.goto(url);
@@ -233,6 +305,26 @@ export const renderFrames = async ({ url, config, outputDir, compositionId, inpu
 
       // Additional small wait to ensure style/layout stability
       await page.evaluate(() => new Promise(resolve => setTimeout(resolve, 150)));
+
+      // Ensure webfonts (if any) are loaded before screenshot
+      await page.evaluate(async () => {
+        try {
+          const p = (window as any).__OPEN_MOTION_FONTS_READY__;
+          if (p && typeof p.then === 'function') {
+            await p;
+          }
+        } catch (e) {
+          // ignore
+        }
+
+        try {
+          if ('fonts' in document) {
+            await (document as any).fonts.ready;
+          }
+        } catch (e) {
+          // ignore
+        }
+      });
 
       // Extract audio assets
       const assets = await page.evaluate(() => (window as any).__OPEN_MOTION_AUDIO_ASSETS__ || []);

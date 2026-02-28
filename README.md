@@ -10,9 +10,11 @@
 
 <p align="center">
   <a href="#-features">Features</a> •
+  <a href="#-packages">Packages</a> •
   <a href="#-installation">Installation</a> •
   <a href="#-quick-start">Quick Start</a> •
-  <a href="#-packages">Packages</a>
+  <a href="#-cli-reference">CLI Reference</a> •
+  <a href="#-api-reference">API Reference</a>
 </p>
 
 ---
@@ -29,6 +31,8 @@ OpenMotion is a high-performance, open-source alternative to Remotion. It allows
 ## ✨ Features
 
 - ⚛️ **React-First**: Use the full power of the React ecosystem.
+- 🤖 **AI-Powered Generation**: Create entire videos from text descriptions using LLMs.
+- ✍️ **AI-Assisted Editing**: Edit your TSX scenes using natural language.
 - ⏱️ **Frame-Perfect Determinism**: Advanced time-hijacking ensures every frame is identical.
 - 🚀 **Parallel Rendering**: Scale your rendering speed by utilizing all CPU cores.
 - 🎵 **Multi-track Audio Mixing**: Support for multiple `<Audio />` with independent volume.
@@ -37,73 +41,15 @@ OpenMotion is a high-performance, open-source alternative to Remotion. It allows
 - 💬 **Caption System**: Automated subtitle rendering with SRT support and TikTok-style animations.
 - 📊 **Media Analysis**: Dynamic metadata extraction for video/audio (duration, dimensions).
 - 📹 **Offthread Video**: High-performance video decoding moved to background processes.
-- 📊 **Dynamic Metadata**: Calculate video dimensions, duration, and other properties dynamically based on input props.
-- 🎬 **GIF & Video Output**: Render to both MP4 video and GIF formats with automatic format detection.
-### 4. 渲染视频 (正式出片)
-
-推荐使用项目自带的 `render` 脚本进行渲染，它会自动完成 **构建 -> 启动静态服务 -> 渲染 -> 自动清理** 的全套流程，确保渲染过程极其稳健，不会因开发服务器缓冲区问题而卡死。
-
-```bash
-# 执行一键渲染 (默认输出 ./out.mp4，开启 4 线程并行)
-npm run render
-
-# 修改输出文件名或指定合成 ID (通过 -- 透传参数)
-npm run render -- -o my-video.mp4 -c main
-```
-
-## 💡 最佳实践
-
-### 稳健渲染方案
-生产环境建议始终优先使用 `npm run render`。该命令内部使用了静态服务模式，彻底告别渲染卡死。
-
-### 参数透传技巧
-你可以通过 `npm run render -- [更多参数]` 覆盖脚本中的默认值：
-- **修改并发数**: `npm run render -- -j 8`
-- **指定 Chromium 路径**: `npm run render -- --chromium-path "/path/to/chrome"`
-
-### 资源存放
-所有本地图片/视频资源请放在 `public/` 目录下，在代码中通过 `/filename` 路径引用。
-
-## 🎬 输出格式支持
-- **.mp4**: 标准视频，包含音频。
-- **.webm**: 支持透明背景的高质量视频。
-- **.gif**: 动态图片，不含音频。
-- **.webp**: 现代动图格式，体积更小，质量更好。
-
-## 🛡️ 特色功能
-- 🛡️ **Pre-Flight Checks**: 内置浏览器安装检查与环境验证。
-- 🌍 **Custom Chromium Path**: 支持通过 `--chromium-path` 参数自定义浏览器路径。
-- 🚀 **Turbo Render**: 一键自动化构建与全自动渲染链条。
-
-## 📚 API Reference
-
-Calculate video properties dynamically:
-
-```tsx
-<Composition
-  id="dynamic-video"
-  component={VideoComponent}
-  width={1280}
-  height={720}
-  fps={30}
-  durationInFrames={300}
-  calculateMetadata={async (props) => {
-    const meta = await getVideoMetadata(props.src);
-    return {
-      width: meta.width,
-      height: meta.height,
-      durationInFrames: Math.ceil(meta.durationInSeconds * 30)
-    };
-  }}
-/>
-```
+- 📊 **Dynamic Metadata**: Calculate video dimensions, duration, and other properties dynamically.
+- 🎬 **GIF & Video Output**: Render to MP4, WebM, GIF, and WebP formats.
 
 ## 📦 Packages
 
 | Package | Description |
 | :--- | :--- |
-| [`@open-motion/core`](./packages/core) | React primitives (`Composition`, `Sequence`, `Loop`), hooks, and media utils (`getVideoMetadata`, `parseSrt`). |
-| [`@open-motion/components`](./packages/components) | High-level components (`Transition`, `ThreeCanvas`, `Lottie`, `Captions`, `TikTokCaption`). |
+| [`@open-motion/core`](./packages/core) | React primitives (`Composition`, `Sequence`, `Loop`), hooks, and media utils. |
+| [`@open-motion/components`](./packages/components) | High-level components (`Transition`, `ThreeCanvas`, `Lottie`, `Captions`). |
 | [`@open-motion/renderer`](./packages/renderer) | Playwright-based capture engine. |
 | [`@open-motion/cli`](./packages/cli) | Command-line interface. |
 
@@ -113,205 +59,172 @@ Calculate video properties dynamically:
 npm install @open-motion/core @open-motion/components
 ```
 
-## 🚀 Quick Start
+## 🔧 Building from Source
 
-### Installation
+To build from source, you'll need [Node.js](https://nodejs.org/) and [pnpm](https://pnpm.io/).
 
 ```bash
-# Install CLI tools globally
-pnpm install -g @open-motion/cli @open-motion/renderer
+git clone https://github.com/jsongo/open-motion.git
+cd open-motion
+pnpm install
+pnpm build
+```
 
-# Install Playwright browsers (required for rendering)
+### Windows: Setting up pnpm global link
+
+If you want to use `pnpm link --global` on Windows, you may need to set up the global bin directory first:
+
+```powershell
+$env:PNPM_HOME = "C:\Users\<YourUser>\AppData\Local\pnpm"
+$env:PATH += ";$env:PNPM_HOME"
+cd packages/cli
+pnpm link --global
+```
+
+Alternatively, run `pnpm setup` and restart your terminal to apply the environment variables automatically.
+
+## 🚀 Quick Start
+
+### 1. Setup
+Install CLI tools and required browsers:
+```bash
+pnpm install -g @open-motion/cli @open-motion/renderer
 npx playwright install chromium
 ```
 
-### Create & Run Your First Project
+If Japanese/Chinese/Korean text renders as squares in headless Linux, it's usually missing system fonts. Either install CJK fonts (recommended) or load a local font at render time.
+
+- Install system fonts (Ubuntu/Debian): `sudo apt-get update && sudo apt-get install -y fonts-noto-cjk`
+- Or load a local font file: `open-motion render ... --font "Noto Sans JP=./public/fonts/NotoSansJP-Regular.woff2"`
+
+### 2. Create Project
+```bash
+mkdir -p my_videos && cd my_videos
+open-motion init my-video1
+cd ../..  # Return to monorepo root
+pnpm install
+```
+
+### 3. Develop & Render
+
+Start the dev server in one terminal:
 
 ```bash
-# Create a new project
-open-motion init fun-video
-cd fun-video && pnpm install
-
-# Start development server
-# Run this in one terminal - it will show the port (e.g. 5173)
+cd my_videos/my-video1
 pnpm run dev
 ```
 
-**Note**: Keep this terminal open. If port 5173 is in use, Vite will automatically try 5174, 5175, etc. Check the output for the actual port number.
-
-### Render Your Video
-
-In another terminal, render your project using the port from above:
+or
 
 ```bash
-# Render to MP4 (14 seconds at 30fps)
-open-motion render -u http://localhost:5173 -o out.mp4 --duration 420
-
-# Render to GIF (14 seconds at 30fps)
-open-motion render -u http://localhost:5173 -o out.gif --duration 420
-
-# Render to WebP (better quality than GIF)
-open-motion render -u http://localhost:5173 -o out.webp --duration 420
-
-# Render to WebM (transparent video support)
-open-motion render -u http://localhost:5173 -o out.webm --duration 420
+pnpm --filter my-video1 dev
 ```
 
-**Duration explained**: `--duration 420` means 420 frames. At 30fps, that's 420 ÷ 30 = **14 seconds** of video.
-
-### Create a Composition
-
-```tsx
-import { Composition, useCurrentFrame, interpolate } from "@open-motion/core";
-import { Transition, TikTokCaption } from "@open-motion/components";
-
-const MyScene = () => {
-  const frame = useCurrentFrame();
-  return (
-    <Transition type="fade">
-      <div style={{ flex: 1, backgroundColor: 'black', color: 'white' }}>
-        <TikTokCaption text="Hello OpenMotion" active={true} />
-      </div>
-    </Transition>
-  );
-};
+In another terminal, render your video using the server URL:
+```bash
+open-motion render -u http://localhost:5173 -o out.mp4 --composition my-video1
 ```
 
-**Note about ports**: If port 5173 is already in use, Vite will automatically try 5174, 5175, etc. Check the dev server output for the actual port number (e.g., "Local: http://localhost:5177/").
+## 💻 CLI Reference
+
+### `open-motion init <name>`
+Initialize a new OpenMotion project with a pre-configured React template.
+
+### `open-motion generate <description>`
+Automatically generate video scenes and code from a text description using an LLM.
+
+| Option | Description |
+| :--- | :--- |
+| `--env <path>` | Path to .env file (default: .env in current directory) |
+| `--scenes <number>` | Number of scenes to generate |
+| `--fps <number>` | Frames per second (default: 30) |
+| `--width <number>` | Video width (default: 1280) |
+| `--height <number>` | Video height (default: 720) |
+
+### `open-motion edit <file>`
+Edit a TSX scene file using natural language instructions.
+
+| Option | Description |
+| :--- | :--- |
+| `--env <path>` | Path to .env file (default: .env in current directory) |
+| `-m, --message <msg>` | Instruction for editing |
+| `-y, --yes` | Auto-apply changes (one-shot mode) |
+
+### `open-motion config`
+Manage LLM provider settings (API keys, models).
+
+- `open-motion config list`
+- `open-motion config get <VAR>`
+
+LLM settings are read from environment variables (you can put them in a project-local `.env` file):
+
+```bash
+# .env
+OPEN_MOTION_PROVIDER=openai
+OPEN_MOTION_MODEL=gpt-5.1
+OPENAI_API_KEY=sk-...
+```
+
+### `open-motion render`
+Render a video from a running OpenMotion application.
+
+| Option | Description |
+| :--- | :--- |
+| `-u, --url <url>` | **Required.** URL of the OpenMotion app (e.g., `http://localhost:5173`) |
+| `-o, --out <path>` | **Required.** Output file path (e.g., `out.mp4`, `animation.gif`) |
+| `-c, --composition <id>` | ID of the composition to render |
+| `-p, --props <json>` | JSON string of props to pass to the composition |
+| `-j, --concurrency <n>` | Number of parallel browser instances (default: 1) |
+| `--format <format>` | Output format: `mp4`, `webm`, `gif`, `webp`, `auto` |
+| `--width <number>` | Override output width |
+| `--height <number>` | Override output height |
+| `--fps <number>` | Override frames per second |
+| `--duration <number>` | Override total frames to render |
+| `--public-dir <path>` | Public directory for static assets (default: `./public`) |
+| `--chromium-path <path>`| Path to custom Chromium executable |
+| `--timeout <number>` | Timeout for browser operations in ms |
+| `--font <spec>` | Load a local font file for rendering (repeatable). Format: `Family=path` or just `path` |
+| `--bgm <path>` | Add a background music track from a local MP3 file |
+| `--bgm-volume <number>` | BGM volume (0.0-1.0, default: 1.0) |
+
+Example (render-time BGM):
+
+```bash
+open-motion render -u http://localhost:5173 -o out.mp4 --bgm ./music/bgm.mp3 --bgm-volume 0.5
+```
+
+Notes:
+- If the BGM is shorter than the video, it will loop to cover the full duration.
+- If the BGM is longer than the video, it will be trimmed to the video duration.
 
 ## 📚 API Reference
 
-Complete reference for all OpenMotion features and components.
+### Core Hooks & Configuration
+**`useCurrentFrame()`**: Get the current frame number.
+**`useVideoConfig()`**: Access width, height, fps, and duration.
 
-### Core Hooks
+### Components
+- **`<Loop />`**: Create looping time contexts.
+- **`<Transition />`**: Smooth enter/exit effects (`fade`, `wipe`, `slide`, `zoom`).
+- **`<ThreeCanvas />`**: Render synced Three.js scenes.
+- **`<Lottie />`**: Declarative Lottie animations.
+- **`<Audio />`**: Multi-track audio with volume control.
+- **`<Captions />`** / **`<TikTokCaption />`**: Subtitle rendering.
+- **`<OffthreadVideo />`**: High-performance background video decoding.
 
-**`useCurrentFrame()`**
-Get the current frame number in your animation.
+### Utilities
+- **`interpolate()`**: Map ranges with easing support.
+- **`Easing`**: Complete library of easing functions.
+- **`parseSrt()`**: Convert SRT files to data structures.
+- **`getVideoMetadata()`**: Fetch dimensions and duration of video files.
 
-```tsx
-const frame = useCurrentFrame();
-const opacity = interpolate(frame, [0, 30], [0, 1]);
-```
+## 💡 Best Practices
 
-**`useVideoConfig()`**
-Access video configuration (width, height, fps, durationInFrames).
+### Robust Rendering
+For production, use the project's built-in `npm run render` script. It handles the full **build -> static server -> render -> cleanup** pipeline, eliminating buffer issues.
 
-```tsx
-const { width, height, fps } = useVideoConfig();
-```
-
-### Animation & Transitions
-
-**`<Loop durationInFrames={30}>`**
-Create looping time contexts for sub-animations.
-
-```tsx
-<Loop durationInFrames={60}>
-  <SpinningLogo />
-</Loop>
-```
-
-**`<Transition type="wipe" direction="right">`**
-Smooth enter/exit transitions. Types: `fade`, `wipe`, `slide`, `zoom`.
-
-```tsx
-<Transition type="wipe" direction="right">
-  <Title text="Hello World" />
-</Transition>
-```
-
-**`Easing.inOutExpo`**
-Complete library of easing functions:
-- `Easing.linear`, `Easing.easeIn`, `Easing.easeOut`, `Easing.easeInOut`
-- `Easing.inOutCubic`, `Easing.outBack`, `Easing.inExpo`, and more
-
-```tsx
-const value = interpolate(frame, [0, 30], [0, 100], {
-  easing: Easing.outCubic,
-});
-```
-
-### 3D & Lottie Integration
-
-**`<ThreeCanvas />`**
-Render Three.js scenes synced with video frames. See `packages/components` for details.
-
-**`<Lottie url="..." />`**
-Declarative Lottie animations with frame-accurate control.
-
-```tsx
-<Lottie url="/animations/logo.json" />
-```
-
-### Media & Captions
-
-**`<Audio src="..." volume={0.8} />`**
-Multi-track audio support with independent volume and timing.
-
-```tsx
-<Audio src="/music.mp3" volume={0.5} startFrom={30} startFrame={60} />
-```
-
-**`parseSrt(srtContent)`**
-Convert SRT subtitle files to arrays.
-
-```tsx
-const subtitles = parseSrt(await fetch('/subtitles.srt').then(r => r.text()));
-```
-
-**`<Captions subtitles={subtitles} />`**
-Flexible subtitle renderer with styling options.
-
-```tsx
-<Captions subtitles={subtitles} color="white" fontSize={24} />
-```
-
-**`<TikTokCaption />`**
-Pre-styled component for TikTok-like animated captions.
-
-**`getVideoMetadata(url)`**
-Fetch video dimensions and duration.
-
-```tsx
-const { width, height, durationInSeconds } = await getVideoMetadata('/video.mp4');
-```
-
-**`<OffthreadVideo src="..." />`**
-High-performance video decoding in background processes.
-
-### Output & Export Options
-
-**CLI Commands**
-
-```bash
-# Basic rendering
-open-motion render -u http://localhost:5173 -o video.mp4
-
-# With custom settings
-open-motion render -u http://localhost:5173 -o video.mp4 \
-  --duration 420 \
-  --width 1920 \
-  --height 1080 \
-  --fps 30
-
-# Render to GIF
-open-motion render -u http://localhost:5173 -o animation.gif \
-  --duration 420 \
-  --public-dir ./public
-```
-
-**File Formats**
-- **MP4**: Full video with audio support (H.264)
-- **WebM**: Web-optimized video with transparency support (VP9)
-- **GIF**: Lightweight animations (no audio)
-- **WebP**: High-quality animated images (better than GIF, no audio)
-
-**Quality Parameters**
-- `--width`: Output width in pixels
-- `--height`: Output height in pixels
-- `--fps`: Frames per second (default: 30)
-- `--duration`: Total frames (e.g., 420 = 14 seconds at 30fps)
-- `--format`: Explicit format (mp4, webm, gif, webp, auto)
+### Asset Storage
+Place all local assets in `public/` and reference them via absolute paths (e.g., `/video.mp4`).
 
 ## 📜 License
 
