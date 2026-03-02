@@ -18,3 +18,4 @@ progress.md.worktrees/
 *.mkv
 *.webm
 my_videos
+.claude

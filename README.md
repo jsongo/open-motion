@@ -101,7 +101,7 @@ If Japanese/Chinese/Korean text renders as squares in headless Linux, it's usual
 ```bash
 mkdir -p my_videos && cd my_videos
 open-motion init my-video1
-cd ../..  # Return to monorepo root
+cd my-video1
 pnpm install
 ```
 
@@ -110,14 +110,7 @@ pnpm install
 Start the dev server in one terminal:
 
 ```bash
-cd my_videos/my-video1
 pnpm run dev
-```
-
-or
-
-```bash
-pnpm --filter my-video1 dev
 ```
 
 In another terminal, render your video using the server URL:

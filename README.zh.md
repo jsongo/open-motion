@@ -101,7 +101,7 @@ npx playwright install chromium
 ```bash
 mkdir -p my_videos && cd my_videos
 open-motion init my-video1
-cd ../..  # 返回 monorepo 根目录
+cd my-video1
 pnpm install
 ```
 
@@ -110,14 +110,7 @@ pnpm install
 在一个终端中启动开发服务器：
 
 ```bash
-cd my_videos/my-video1
 pnpm run dev
-```
-
-或
-
-```bash
-pnpm --filter my-video1 dev
 ```
 
 在另一个终端中，使用服务器 URL 渲染视频：
