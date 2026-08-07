@@ -4,6 +4,7 @@ import { MediaShowcase } from './scenes/media/MediaShowcase';
 import { CenteringShowcase } from './scenes/layout/CenteringShowcase';
 import { IntegrationsShowcase } from './scenes/integrations/IntegrationsShowcase';
 import { HelloWorldVideo } from './scenes/hello-world';
+import { ProductLaunch } from './scenes/demo-comparison/ProductLaunch';
 
 export const App = () => {
   const isRendering = typeof (window as any).__OPEN_MOTION_FRAME__ === 'number';
@@ -15,6 +16,7 @@ export const App = () => {
   const centeringConfig = { width: 1280, height: 720, fps: 30, durationInFrames: 60 };
   const integrationsConfig = { width: 1280, height: 720, fps: 30, durationInFrames: 120 };
   const helloWorldConfig = { width: 1280, height: 720, fps: 30, durationInFrames: 90 };
+  const productLaunchConfig = { width: 1280, height: 720, fps: 30, durationInFrames: 840 };
 
   if (isRendering) {
     let Component = HelloWorldVideo;
@@ -32,6 +34,9 @@ export const App = () => {
     } else if (compositionId === 'integrations-showcase') {
       Component = IntegrationsShowcase;
       activeConfig = integrationsConfig;
+    } else if (compositionId === 'product-launch') {
+      Component = ProductLaunch;
+      activeConfig = productLaunchConfig;
     }
 
     return (
@@ -51,6 +56,7 @@ export const App = () => {
           <Composition id="media-showcase" component={MediaShowcase} {...mediaConfig} />
           <Composition id="centering-test" component={CenteringShowcase} {...centeringConfig} />
           <Composition id="integrations-showcase" component={IntegrationsShowcase} {...integrationsConfig} />
+          <Composition id="product-launch" component={ProductLaunch} {...productLaunchConfig} />
         </div>
       </CompositionProvider>
     </div>
