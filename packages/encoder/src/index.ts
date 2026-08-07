@@ -7,6 +7,7 @@ export interface AudioAsset {
   startFrame: number;
   startFrom?: number;
   volume?: number;
+  isBgm?: boolean;
 }
 
 export interface EncodeOptions {
@@ -14,6 +15,7 @@ export interface EncodeOptions {
   fps: number;
   outputFile: string;
   audioAssets?: AudioAsset[];
+  durationInFrames?: number;
   onProgress?: (percent: number) => void;
 }
 
@@ -128,7 +130,7 @@ export const encodeWebP = ({ framesDir, fps, outputFile, width, height, onProgre
   });
 };
 
-export const encodeVideo = ({ framesDir, fps, outputFile, audioAssets = [], onProgress }: EncodeOptions) => {
+export const encodeVideo = ({ framesDir, fps, outputFile, audioAssets = [], durationInFrames, onProgress }: EncodeOptions) => {
   // Verify frames exist
   const files = fs.readdirSync(framesDir).filter(f => f.startsWith('frame-') && f.endsWith('.png'));
   if (files.length === 0) {
@@ -144,6 +146,12 @@ export const encodeVideo = ({ framesDir, fps, outputFile, audioAssets = [], onPr
     // Add audio inputs
     audioAssets.forEach(asset => {
       command.input(asset.src);
+
+      // For render-time BGM we loop the input so short tracks cover the full video.
+      // This is an input option and must be applied to the corresponding input.
+      if (asset.isBgm) {
+        command.inputOptions(['-stream_loop -1']);
+      }
     });
 
     const videoOptions = [
@@ -153,12 +161,20 @@ export const encodeVideo = ({ framesDir, fps, outputFile, audioAssets = [], onPr
     ];
 
     if (audioAssets.length > 0) {
+      const durationSec = durationInFrames ? (durationInFrames / fps) : undefined;
+
       const filters = audioAssets.map((asset, i) => {
         const delayMs = Math.round((asset.startFrame / fps) * 1000);
         const startFromSec = (asset.startFrom || 0) / fps;
         const volume = asset.volume ?? 1;
 
         // Use a more robust filter chain for each audio input
+        if (asset.isBgm) {
+          const delay = delayMs > 0 ? `,adelay=${delayMs}|${delayMs}` : '';
+          const trimEnd = durationSec != null ? `,atrim=end=${durationSec}` : '';
+          return `[${i + 1}:a]atrim=start=${startFromSec},asetpts=PTS-STARTPTS${delay}${trimEnd},volume=${volume}[a${i}]`;
+        }
+
         return `[${i + 1}:a]atrim=start=${startFromSec},asetpts=PTS-STARTPTS,adelay=${delayMs}|${delayMs},volume=${volume}[a${i}]`;
       });
 

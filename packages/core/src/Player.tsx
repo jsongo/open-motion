@@ -1,5 +1,6 @@
 import React, { useState, useEffect, useCallback, useRef } from 'react';
 import { CompositionProvider, VideoConfig } from './index';
+import { AudioSyncManager } from './AudioSync';
 
 export interface PlayerProps {
   component: React.ComponentType<any>;
@@ -106,6 +107,12 @@ export const Player: React.FC<PlayerProps> = ({
       >
         <CompositionProvider config={config} frame={frame} inputProps={inputProps}>
           <Component />
+          <AudioSyncManager
+            frame={frame}
+            fps={config.fps}
+            isPlaying={isPlaying}
+            durationInFrames={config.durationInFrames}
+          />
         </CompositionProvider>
       </div>
 

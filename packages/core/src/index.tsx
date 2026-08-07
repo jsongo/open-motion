@@ -1,4 +1,7 @@
 import React, { createContext, useContext } from 'react';
+import { AbsoluteFrameContext } from './context';
+
+export { AbsoluteFrameContext };
 
 export interface VideoConfig {
   width: number;
@@ -9,7 +12,6 @@ export interface VideoConfig {
 
 const VideoConfigContext = createContext<VideoConfig | null>(null);
 const FrameContext = createContext<number>(0);
-const AbsoluteFrameContext = createContext<number>(0);
 const InputPropsContext = createContext<any>({});
 
 export const CompositionProvider: React.FC<{
@@ -360,33 +362,7 @@ export const Loop: React.FC<{
   );
 };
 
-/**
- * Audio Component
- */
-export const Audio: React.FC<{
-  src: string;
-  startFrom?: number;
-  volume?: number;
-}> = (props) => {
-  const startFrame = useAbsoluteFrame();
-  if (typeof window !== 'undefined') {
-    (window as any).__OPEN_MOTION_AUDIO_ASSETS__ = (window as any).__OPEN_MOTION_AUDIO_ASSETS__ || [];
-    const exists = (window as any).__OPEN_MOTION_AUDIO_ASSETS__.find(
-      (a: any) =>
-        a.src === props.src &&
-        (a.startFrom || 0) === (props.startFrom || 0) &&
-        (a.volume || 1) === (props.volume || 1) &&
-        a.startFrame === startFrame
-    );
-    if (!exists) {
-      (window as any).__OPEN_MOTION_AUDIO_ASSETS__.push({
-        ...props,
-        startFrame,
-      });
-    }
-  }
-  return null;
-};
+export { Audio, type AudioProps } from './Audio';
 
 /**
  * Video Component
